@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, ShieldCheck, X, KeyRound, AlertCircle, Loader2 } from 'lucide-react';
+import { Lock, X, KeyRound, AlertCircle, Loader2 } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -33,37 +33,30 @@ export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticat
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div 
+      <div
         id="admin-auth-gate-modal"
-        className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden"
+        className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden"
       >
-        <div className="flex items-center justify-between px-6 py-4 bg-neutral-50 border-b border-neutral-200">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-amber-100 text-amber-800 rounded-lg">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-neutral-900">Admin Authentication</h3>
-              <p className="text-xs text-neutral-500">Access Restricted Hiring Team View</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 rounded-lg transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        <button
+          onClick={onClose}
+          className="absolute right-5 top-5 p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <p className="text-xs text-neutral-600 leading-relaxed">
-            As outlined in the assignment brief, candidate applications and AI match scores are strictly confidential and restricted to the hiring team.
-          </p>
+        <form onSubmit={handleSubmit} className="px-8 pt-10 pb-8 text-center space-y-5">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-neutral-900 text-white flex items-center justify-center">
+            <Lock className="w-6 h-6" />
+          </div>
 
           <div className="space-y-1.5">
-            <label className="block text-xs font-medium text-neutral-700">
-              Admin Passcode
-            </label>
+            <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Admin Access</h3>
+            <p className="text-xs text-neutral-500 leading-relaxed max-w-[26ch] mx-auto">
+              Enter your access passcode to manage jobs and review candidates.
+            </p>
+          </div>
+
+          <div className="space-y-1.5 text-left">
             <div className="relative">
               <KeyRound className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
@@ -74,45 +67,42 @@ export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticat
                   setPasscode(e.target.value);
                   if (error) setError('');
                 }}
-                placeholder="Enter passcode (e.g. admin123)"
-                className="w-full pl-9 pr-4 py-2 text-sm bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all"
+                placeholder="••••••••"
+                className="w-full pl-9 pr-4 py-2.5 text-sm text-center tracking-widest bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all"
                 autoFocus
               />
             </div>
             {error && (
-              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+              <p className="text-xs text-red-600 flex items-center justify-center gap-1 mt-1.5">
                 <AlertCircle className="w-3.5 h-3.5" />
                 {error}
               </p>
             )}
           </div>
 
-          <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-xs text-neutral-500 flex items-center justify-between">
-            <span>Default passcode for evaluation:</span>
-            <code className="px-2 py-0.5 bg-neutral-200 text-neutral-800 rounded font-mono font-semibold">
-              admin123
-            </code>
-          </div>
+          <button
+            id="btn-submit-passcode"
+            type="submit"
+            disabled={isVerifying}
+            className="w-full py-2.5 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 text-sm font-medium transition-colors shadow-xs disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {isVerifying && <Loader2 className="w-4 h-4 animate-spin" />}
+            <span>Unlock Dashboard</span>
+          </button>
 
-          <div className="flex flex-col gap-2 pt-2">
-            <button
-              id="btn-submit-passcode"
-              type="submit"
-              disabled={isVerifying}
-              className="w-full py-2.5 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 text-sm font-medium transition-colors shadow-xs disabled:opacity-60 flex items-center justify-center gap-2"
-            >
-              {isVerifying && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>Verify & Enter Admin Portal</span>
-            </button>
-            <button
-              id="btn-quick-unlock"
-              type="button"
-              onClick={handleQuickUnlock}
-              disabled={isVerifying}
-              className="w-full py-2 bg-neutral-100 text-neutral-700 rounded-xl hover:bg-neutral-200 text-xs font-medium transition-colors disabled:opacity-60"
-            >
-              One-Click Unlock (Reviewer Shortcut)
-            </button>
+          <div className="pt-1 border-t border-neutral-100">
+            <p className="text-[11px] text-neutral-400 pt-4">
+              Demo environment ·{' '}
+              <button
+                id="btn-quick-unlock"
+                type="button"
+                onClick={handleQuickUnlock}
+                disabled={isVerifying}
+                className="underline underline-offset-2 hover:text-neutral-600 transition-colors disabled:opacity-60"
+              >
+                use demo passcode
+              </button>
+            </p>
           </div>
         </form>
       </div>

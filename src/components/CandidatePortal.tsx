@@ -6,24 +6,26 @@ import {
 import { validateDocxFile, extractTextFromDocx } from '../utils/docxUtils';
 import { submitApplication } from '../services/apiClient';
 import { SAMPLE_CANDIDATE_PRESETS } from '../data/initialData';
-import { 
-  Briefcase, 
-  Building2, 
-  MapPin, 
-  UploadCloud, 
-  FileText, 
-  AlertCircle, 
-  CheckCircle2, 
-  Loader2, 
-  User, 
-  Mail, 
-  Phone, 
-  Calendar, 
-  Home, 
+import {
+  Briefcase,
+  Building2,
+  MapPin,
+  UploadCloud,
+  FileText,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Home,
   Sparkles,
   ArrowRight,
   ShieldCheck,
-  Info
+  Info,
+  X,
+  PartyPopper
 } from 'lucide-react';
 
 interface Props {
@@ -57,7 +59,9 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmittedSuccess, setIsSubmittedSuccess] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [activeJobDetailView, setActiveJobDetailView] = useState<boolean>(false);
+  const [isJdExpanded, setIsJdExpanded] = useState<boolean>(false);
+
+  const JD_PREVIEW_LENGTH = 420;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,6 +112,19 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
     if (file) {
       processFile(file);
     }
+  };
+
+  const handleRemoveFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDocxFile(null);
+    setParsedResumeText('');
+    setFileError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleSelectJob = (jobId: string) => {
+    setSelectedJobId(jobId);
+    setIsJdExpanded(false);
   };
 
   // Quick fill preset for easy tester evaluation
@@ -220,16 +237,16 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
 
       {isSubmittedSuccess ? (
         /* Confirmed submission screen strictly adheres to candidate brief */
-        <div 
+        <div
           id="candidate-confirmation-card"
           className="max-w-xl mx-auto my-12 p-8 sm:p-10 bg-white rounded-2xl border border-neutral-200 shadow-sm text-center"
         >
           <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-8 h-8" />
+            <PartyPopper className="w-8 h-8" />
           </div>
 
           <h2 className="text-2xl font-bold text-neutral-900 tracking-tight mb-3">
-            Application Submitted
+            Application Received!
           </h2>
 
           <p className="text-base text-neutral-700 leading-relaxed mb-6 font-medium">
@@ -248,6 +265,26 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
             >
               Apply for Another Role
             </button>
+          </div>
+        </div>
+      ) : isSubmitting ? (
+        /* Processing state — submission touches extraction, LLM screening, and
+           persistence server-side, which can take a few seconds; make that visible
+           rather than leaving the candidate wondering if the click registered. */
+        <div className="max-w-xl mx-auto my-12 p-8 sm:p-10 bg-white rounded-2xl border border-neutral-200 shadow-sm text-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-neutral-100 text-neutral-700 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin" />
+          </div>
+          <h2 className="text-xl font-bold text-neutral-900 tracking-tight mb-2">
+            Submitting your application…
+          </h2>
+          <p className="text-sm text-neutral-500 max-w-sm mx-auto">
+            Please wait while we securely send your details and resume to {selectedJob?.company}'s hiring team.
+          </p>
+          <div className="mt-6 flex items-center justify-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 animate-bounce [animation-delay:-0.3s]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 animate-bounce [animation-delay:-0.15s]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 animate-bounce" />
           </div>
         </div>
       ) : (
@@ -279,23 +316,31 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
                   <div
                     key={job.id}
                     id={`job-card-${job.id}`}
-                    onClick={() => setSelectedJobId(job.id)}
-                    className={`p-4 rounded-xl cursor-pointer border transition-all ${
+                    onClick={() => handleSelectJob(job.id)}
+                    className={`p-4 rounded-xl cursor-pointer border-2 transition-all ${
                       isSelected
                         ? 'border-neutral-900 bg-neutral-900 text-white shadow-md'
                         : 'border-neutral-200 bg-white hover:border-neutral-300 text-neutral-800'
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <span className={`text-[11px] font-semibold uppercase tracking-wider ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
-                          {job.company}
-                        </span>
-                        <h3 className="font-semibold text-base leading-tight mt-0.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`text-[11px] font-semibold uppercase tracking-wider ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
+                            {job.company}
+                          </span>
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full ${
+                            isSelected ? 'bg-emerald-400/20 text-emerald-300' : 'bg-emerald-50 text-emerald-700'
+                          }`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Open
+                          </span>
+                        </div>
+                        <h3 className="font-semibold text-base leading-tight mt-1">
                           {job.title}
                         </h3>
                       </div>
-                      <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-neutral-800 text-white' : 'bg-neutral-100 text-neutral-700'}`}>
+                      <div className={`p-1.5 rounded-lg shrink-0 ${isSelected ? 'bg-neutral-800 text-white' : 'bg-neutral-100 text-neutral-700'}`}>
                         <Briefcase className="w-4 h-4" />
                       </div>
                     </div>
@@ -330,9 +375,21 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
                   </div>
                 </div>
 
-                <div className="text-xs text-neutral-600 leading-relaxed max-h-72 overflow-y-auto whitespace-pre-line pr-2">
-                  {selectedJob.description}
+                <div className="text-xs text-neutral-600 leading-relaxed whitespace-pre-line">
+                  {isJdExpanded || selectedJob.description.length <= JD_PREVIEW_LENGTH
+                    ? selectedJob.description
+                    : `${selectedJob.description.slice(0, JD_PREVIEW_LENGTH).trimEnd()}…`}
                 </div>
+
+                {selectedJob.description.length > JD_PREVIEW_LENGTH && (
+                  <button
+                    type="button"
+                    onClick={() => setIsJdExpanded((prev) => !prev)}
+                    className="text-xs font-semibold text-neutral-900 hover:text-neutral-600 underline underline-offset-2 transition-colors"
+                  >
+                    {isJdExpanded ? 'Show less' : 'Read more'}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -542,18 +599,26 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
 
                   {docxFile ? (
                     <div className="flex items-center justify-center gap-3">
-                      <div className="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl">
+                      <div className="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl shrink-0">
                         <FileText className="w-6 h-6" />
                       </div>
-                      <div className="text-left">
-                        <p className="text-sm font-semibold text-neutral-900">{docxFile.name}</p>
+                      <div className="text-left min-w-0">
+                        <p className="text-sm font-semibold text-neutral-900 truncate">{docxFile.name}</p>
                         <p className="text-xs text-neutral-500">
                           {(docxFile.size / 1024).toFixed(1)} KB • Word Document (.docx)
                         </p>
                         <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 mt-1 font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Ready for submission
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Ready to submit
                         </span>
                       </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveFile}
+                        className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                        title="Remove file"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   ) : (
                     <div className="space-y-2">
