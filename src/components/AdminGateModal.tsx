@@ -50,7 +50,7 @@ export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticat
           </div>
 
           <div className="space-y-1.5">
-            <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Admin Access</h3>
+            <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Hiring Team Access</h3>
             <p className="text-xs text-neutral-500 leading-relaxed max-w-[26ch] mx-auto">
               Enter your access passcode to manage jobs and review candidates.
             </p>

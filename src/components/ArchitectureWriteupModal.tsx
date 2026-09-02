@@ -22,8 +22,8 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900">Candidate Brief Write-Up & Evaluation</h2>
-              <p className="text-xs text-neutral-500">Addressing Sections 4 & 6 of the Take-Home Assignment Brief</p>
+              <h2 className="text-lg font-semibold text-neutral-900">Project Write-Up</h2>
+              <p className="text-xs text-neutral-500">Approach, trade-offs, and evaluation notes for this submission</p>
             </div>
           </div>
           <button

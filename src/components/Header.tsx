@@ -33,14 +33,9 @@ export const Header: React.FC<Props> = ({
               <Briefcase className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-neutral-900 text-base sm:text-lg tracking-tight">Resume Screener</span>
-                <span className="hidden xs:inline text-[10px] font-semibold uppercase px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600 border border-neutral-200">
-                  Dual-Sided
-                </span>
-              </div>
+              <span className="font-bold text-neutral-900 text-base sm:text-lg tracking-tight">Resume Screener</span>
               <p className="text-xs text-neutral-500 hidden lg:block">
-                {jobCount} Active Openings • {applicationCount} Applications
+                {jobCount} Open Positions • {applicationCount} Applications
               </p>
             </div>
           </div>
@@ -51,10 +46,10 @@ export const Header: React.FC<Props> = ({
               id="btn-open-writeup"
               onClick={onOpenWriteup}
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-neutral-700 hover:text-neutral-900 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg transition-colors"
-              title="View Candidate Brief & Technical Write-up"
+              title="View Project Write-up"
             >
               <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="hidden xl:inline">Brief Write-Up</span>
+              <span className="hidden xl:inline">Project Write-Up</span>
             </button>
 
             {isAdminAuthenticated && activeTab === 'admin' && (
@@ -62,7 +57,7 @@ export const Header: React.FC<Props> = ({
                 id="btn-admin-logout"
                 onClick={onAdminLogout}
                 className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-neutral-600 hover:text-red-600 hover:bg-red-50 border border-neutral-200 rounded-lg transition-colors"
-                title="Lock Admin Access"
+                title="Lock Hiring Team Access"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Lock</span>
@@ -82,8 +77,7 @@ export const Header: React.FC<Props> = ({
               }`}
             >
               <UserCheck className="w-4 h-4 text-blue-600 shrink-0" />
-              <span className="truncate">Candidate Portal</span>
-              <span className="hidden xl:inline text-[10px] px-1.5 py-0.2 rounded bg-neutral-200 text-neutral-700">Public</span>
+              <span className="truncate">Open Positions</span>
             </button>
 
             <button
@@ -106,8 +100,7 @@ export const Header: React.FC<Props> = ({
               ) : (
                 <Lock className="w-4 h-4 text-amber-600 shrink-0" />
               )}
-              <span className="truncate">Admin Dashboard</span>
-              <span className="hidden xl:inline text-[10px] px-1.5 py-0.2 rounded bg-neutral-200 text-neutral-700">Protected</span>
+              <span className="truncate">Hiring Team</span>
             </button>
           </div>
 

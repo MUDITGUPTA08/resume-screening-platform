@@ -124,14 +124,11 @@ export const AdminDashboard: React.FC<Props> = ({
               <ShieldCheck className="w-4 h-4" />
             </span>
             <h1 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight">
-              Hiring Team Admin Dashboard
+              Hiring Dashboard
             </h1>
-            <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 whitespace-nowrap">
-              Admin-Only Score Room
-            </span>
           </div>
           <p className="text-xs text-neutral-500 mt-1">
-            Review posted job descriptions, applicant pipelines, and LLM-evaluated candidate fit scores.
+            Manage open positions and review candidate applications.
           </p>
         </div>
 
@@ -192,9 +189,9 @@ export const AdminDashboard: React.FC<Props> = ({
         <div className="lg:col-span-4 space-y-3">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-              Posted Job Openings ({jobs.length})
+              Open Positions ({jobs.length})
             </h2>
-            <span className="text-[11px] text-neutral-400">Select to view applicants</span>
+            <span className="text-[11px] text-neutral-400">Select a role</span>
           </div>
 
           {jobs.length === 0 && (
@@ -308,7 +305,7 @@ export const AdminDashboard: React.FC<Props> = ({
               {/* Filters for this JD's applications */}
               <div className="flex flex-col gap-3 pt-1">
                 <span className="text-xs font-semibold text-neutral-700">
-                  Applicant Pool ({filteredApplications.length} of {jobApplications.length})
+                  Candidates for this role ({filteredApplications.length} of {jobApplications.length})
                 </span>
 
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">

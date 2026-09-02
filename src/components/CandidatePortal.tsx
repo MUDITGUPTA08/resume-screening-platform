@@ -60,6 +60,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
   const [isSubmittedSuccess, setIsSubmittedSuccess] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isJdExpanded, setIsJdExpanded] = useState<boolean>(false);
+  const [isDemoProfilesOpen, setIsDemoProfilesOpen] = useState<boolean>(false);
 
   const JD_PREVIEW_LENGTH = 420;
 
@@ -219,21 +220,17 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* View Banner */}
-      <div className="mb-6 p-3.5 bg-blue-50 border border-blue-200/80 rounded-xl flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-xs sm:text-sm font-medium text-blue-900">
-            Candidate Application Portal
-          </span>
-          <span className="text-xs text-blue-700 hidden sm:inline">
-            — Select a role, complete your details, and attach your .docx CV.
-          </span>
+      {/* Page Header */}
+      {!isSubmittedSuccess && !isSubmitting && (
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">
+            Find your next opportunity
+          </h1>
+          <p className="text-sm text-neutral-500 mt-1">
+            Browse open positions and submit your application.
+          </p>
         </div>
-        <span className="text-[11px] font-medium text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full">
-          Public View
-        </span>
-      </div>
+      )}
 
       {isSubmittedSuccess ? (
         /* Confirmed submission screen strictly adheres to candidate brief */
@@ -292,9 +289,10 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
           
           {/* Left Column: Job Selection & Description (4 cols on lg) */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-neutral-900 text-white text-xs font-bold flex items-center justify-center shrink-0">1</span>
               <h2 className="text-base font-semibold text-neutral-900">
-                1. Select Open Position ({jobs.length})
+                Select a position
               </h2>
             </div>
 
@@ -397,37 +395,49 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
           {/* Right Column: Candidate Details & .docx Upload (7 cols on lg) */}
           <div className="lg:col-span-7 bg-white rounded-2xl border border-neutral-200 shadow-xs p-6 sm:p-7">
             
-            {/* Quick Test Bar for evaluators */}
-            <div className="mb-6 p-3 bg-neutral-50 rounded-xl border border-neutral-200">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-neutral-800 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                  Quick Fill Test Profiles (For Evaluators)
+            {/* Demo profiles — collapsed by default, small utility rather than a headline feature */}
+            <div className="mb-6 rounded-xl border border-neutral-200 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsDemoProfilesOpen((prev) => !prev)}
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-neutral-50 hover:bg-neutral-100 text-left transition-colors"
+              >
+                <span className="text-xs font-medium text-neutral-600 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Demo Profiles
                 </span>
-                <span className="text-[10px] text-neutral-500">Click to fill form & attach CV</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {SAMPLE_CANDIDATE_PRESETS.map((preset, idx) => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    onClick={() => handleApplyPreset(idx)}
-                    className="p-2 text-left bg-white hover:bg-neutral-100 border border-neutral-200 rounded-lg text-xs transition-colors"
-                  >
-                    <div className="font-semibold text-neutral-900 truncate">{preset.details.fullName}</div>
-                    <div className="text-[10px] text-neutral-500 truncate">{preset.role}</div>
-                  </button>
-                ))}
-              </div>
+                <ArrowRight className={`w-3 h-3 text-neutral-400 transition-transform ${isDemoProfilesOpen ? 'rotate-90' : ''}`} />
+              </button>
+              {isDemoProfilesOpen && (
+                <div className="p-3 space-y-2 bg-white">
+                  <p className="text-[11px] text-neutral-500">Quickly populate the form with sample candidate data.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {SAMPLE_CANDIDATE_PRESETS.map((preset, idx) => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        onClick={() => handleApplyPreset(idx)}
+                        className="p-2 text-left bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg text-xs transition-colors"
+                      >
+                        <div className="font-semibold text-neutral-900 truncate">{preset.details.fullName}</div>
+                        <div className="text-[10px] text-neutral-500 truncate">{preset.role}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="mb-6">
-              <h2 className="text-lg font-bold text-neutral-900 tracking-tight">
-                2. Application Form
-              </h2>
-              <p className="text-xs text-neutral-500">
-                Applying for <span className="font-semibold text-neutral-800">{selectedJob?.title}</span> at <span className="font-semibold text-neutral-800">{selectedJob?.company}</span>
-              </p>
+            <div className="mb-6 flex items-center gap-2.5">
+              <span className="w-6 h-6 rounded-full bg-neutral-900 text-white text-xs font-bold flex items-center justify-center shrink-0">2</span>
+              <div>
+                <h2 className="text-lg font-bold text-neutral-900 tracking-tight leading-tight">
+                  Complete your application
+                </h2>
+                <p className="text-xs text-neutral-500">
+                  For <span className="font-semibold text-neutral-800">{selectedJob?.title}</span> at <span className="font-semibold text-neutral-800">{selectedJob?.company}</span>
+                </p>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
