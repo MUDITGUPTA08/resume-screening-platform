@@ -157,7 +157,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, onApplicationSubmitted 
     setIsSubmitting(true);
 
     try {
-      // Screen resume with server Gemini endpoint
+      // Screen resume with server Groq endpoint
       const screeningRequest: ScreenResumeRequest = {
         jobTitle: selectedJob.title,
         jobCompany: selectedJob.company,

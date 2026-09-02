@@ -1,5 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
-
 export interface ScreeningResult {
   matchScore: number;
   verdict: 'Strong Match' | 'Potential Match' | 'Moderate Match' | 'Low Match';
@@ -24,15 +22,15 @@ export interface ScreenParams {
   resumeText: string;
 }
 
-function getGeminiClient(): GoogleGenAI | null {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
+function getGroqApiKey(): string | null {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey || apiKey === 'MY_GROQ_API_KEY') {
     return null;
   }
-  return new GoogleGenAI({ apiKey });
+  return apiKey;
 }
 
-// Deterministic fallback evaluator when Gemini API key is not present or offline
+// Deterministic fallback evaluator when Groq API key is not present or offline
 function performHeuristicScreening(params: {
   jobTitle: string;
   jobCompany: string;
@@ -105,9 +103,9 @@ export async function screenCandidate(params: ScreenParams): Promise<ScreeningRe
     throw new Error('Job description and resume text are required.');
   }
 
-  const ai = getGeminiClient();
+  const apiKey = getGroqApiKey();
 
-  if (!ai) {
+  if (!apiKey) {
     return performHeuristicScreening({
       jobTitle: jobTitle || 'Target Role',
       jobCompany: jobCompany || 'Hiring Organization',
@@ -152,31 +150,45 @@ Return ONLY a valid JSON object with the following structure:
   "followUpQuestions": ["string", "string", "string"]
 }`;
 
-  let response;
-  let modelUsed = 'gemini-2.5-flash';
-  try {
-    response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      }
+  const primaryModel = 'openai/gpt-oss-120b';
+  const fallbackModel = 'openai/gpt-oss-20b';
+  let modelUsed = primaryModel;
+
+  async function callGroq(model: string): Promise<string> {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+      }),
     });
-  } catch (e) {
-    console.warn('gemini-2.5-flash unavailable, attempting gemini-2.0-flash:', e);
-    modelUsed = 'gemini-2.0-flash';
-    response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      }
-    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`Groq API error (${res.status}): ${errText}`);
+    }
+
+    const data = await res.json();
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('Empty response received from Groq.');
+    }
+    return content;
   }
 
-  const responseText = response.text;
-  if (!responseText) {
-    throw new Error('Empty response received from Gemini.');
+  let responseText: string;
+  try {
+    responseText = await callGroq(primaryModel);
+  } catch (e) {
+    console.warn(`${primaryModel} unavailable, attempting ${fallbackModel}:`, e);
+    modelUsed = fallbackModel;
+    responseText = await callGroq(fallbackModel);
   }
 
   const parsedData = JSON.parse(responseText);
@@ -203,7 +215,7 @@ export async function screenCandidateSafe(params: ScreenParams): Promise<Screeni
   try {
     return await screenCandidate(params);
   } catch (error) {
-    console.error('Error during Gemini screening, using heuristic fallback:', error);
+    console.error('Error during Groq screening, using heuristic fallback:', error);
     return performHeuristicScreening({
       jobTitle: params.jobTitle || 'Target Role',
       jobCompany: params.jobCompany || 'Hiring Organization',

@@ -44,7 +44,7 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
             </h3>
             <div className="space-y-2 text-neutral-700 text-xs sm:text-sm">
               <p>
-                <strong>Approach:</strong> Architected a dedicated two-sided platform strictly isolating the public applicant experience from the hiring team’s evaluation suite. Integrated client-side OpenXML <code>.docx</code> extraction via <code>mammoth</code> to enforce Word document exclusivity, and paired it with a server-side Gemini 3.8 Flash pipeline generating calibrated match scores, fit summaries, gaps, and targeted interview follow-ups.
+                <strong>Approach:</strong> Architected a dedicated two-sided platform strictly isolating the public applicant experience from the hiring team’s evaluation suite. Integrated client-side OpenXML <code>.docx</code> extraction via <code>mammoth</code> to enforce Word document exclusivity, and paired it with a server-side Groq (GPT-OSS 120B) pipeline generating calibrated match scores, fit summaries, gaps, and targeted interview follow-ups.
               </p>
               <p>
                 <strong>Data Modeling:</strong> Implemented a normalized one-to-many relationship (<code>JobOpening</code> &rarr; <code>JobApplication[]</code>) supporting unlimited candidate submissions per JD without fixed-schema hardcoding.
@@ -112,7 +112,7 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
               Prompt & LLM Design
             </h4>
             <p className="text-xs text-neutral-600 mb-2">
-              Structured JSON schema response powered by <code>gemini-2.5-flash</code> evaluating the resume against JD criteria:
+              Structured JSON schema response powered by <code>openai/gpt-oss-120b</code> (Groq) evaluating the resume against JD criteria:
             </p>
             <ul className="text-xs space-y-1 text-neutral-600 list-disc list-inside">
               <li><strong>Match Score:</strong> Calibrated 0-100 integer reflecting depth of relevant experience and core requirements.</li>
