@@ -39,11 +39,3 @@ export interface JobApplication {
   submittedAt: string;
   status: 'submitted' | 'reviewed' | 'shortlisted' | 'rejected';
 }
-
-export interface ScreenResumeRequest {
-  jobTitle: string;
-  jobCompany: string;
-  jobDescription: string;
-  candidate: CandidateDetails;
-  resumeText: string;
-}

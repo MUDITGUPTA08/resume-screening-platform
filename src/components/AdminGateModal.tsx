@@ -1,29 +1,34 @@
 import React, { useState } from 'react';
-import { Lock, ShieldCheck, X, KeyRound, AlertCircle } from 'lucide-react';
+import { Lock, ShieldCheck, X, KeyRound, AlertCircle, Loader2 } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onAuthenticate: (passcode: string) => boolean;
+  onAuthenticate: (passcode: string) => Promise<boolean>;
 }
 
 export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticate }) => {
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = onAuthenticate(passcode.trim());
+    setIsVerifying(true);
+    const success = await onAuthenticate(passcode.trim());
+    setIsVerifying(false);
     if (!success) {
       setError('Invalid admin passcode. Hint: Use default passcode "admin123".');
     }
   };
 
-  const handleQuickUnlock = () => {
-    onAuthenticate('admin123');
+  const handleQuickUnlock = async () => {
+    setIsVerifying(true);
+    await onAuthenticate('admin123');
+    setIsVerifying(false);
   };
 
   return (
@@ -93,15 +98,18 @@ export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticat
             <button
               id="btn-submit-passcode"
               type="submit"
-              className="w-full py-2.5 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 text-sm font-medium transition-colors shadow-xs"
+              disabled={isVerifying}
+              className="w-full py-2.5 bg-neutral-900 text-white rounded-xl hover:bg-neutral-800 text-sm font-medium transition-colors shadow-xs disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              Verify & Enter Admin Portal
+              {isVerifying && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>Verify & Enter Admin Portal</span>
             </button>
             <button
               id="btn-quick-unlock"
               type="button"
               onClick={handleQuickUnlock}
-              className="w-full py-2 bg-neutral-100 text-neutral-700 rounded-xl hover:bg-neutral-200 text-xs font-medium transition-colors"
+              disabled={isVerifying}
+              className="w-full py-2 bg-neutral-100 text-neutral-700 rounded-xl hover:bg-neutral-200 text-xs font-medium transition-colors disabled:opacity-60"
             >
               One-Click Unlock (Reviewer Shortcut)
             </button>

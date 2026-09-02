@@ -1,5 +1,5 @@
 import React from 'react';
-import { Briefcase, ShieldCheck, UserCheck, BookOpen, RotateCcw, Lock, Unlock } from 'lucide-react';
+import { Briefcase, ShieldCheck, UserCheck, BookOpen, Lock, Unlock } from 'lucide-react';
 
 interface Props {
   activeTab: 'candidate' | 'admin';
@@ -8,7 +8,6 @@ interface Props {
   onOpenAdminAuth: () => void;
   onAdminLogout: () => void;
   onOpenWriteup: () => void;
-  onResetData: () => void;
   applicationCount: number;
   jobCount: number;
 }
@@ -20,7 +19,6 @@ export const Header: React.FC<Props> = ({
   onOpenAdminAuth,
   onAdminLogout,
   onOpenWriteup,
-  onResetData,
   applicationCount,
   jobCount,
 }) => {
@@ -111,19 +109,6 @@ export const Header: React.FC<Props> = ({
                 <span className="hidden sm:inline">Lock</span>
               </button>
             )}
-
-            <button
-              id="btn-reset-demo-data"
-              onClick={() => {
-                if (window.confirm('Reset all job openings and applications to default sample data?')) {
-                  onResetData();
-                }
-              }}
-              className="p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
-              title="Reset to Sample Openings & Applications"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
           </div>
 
         </div>

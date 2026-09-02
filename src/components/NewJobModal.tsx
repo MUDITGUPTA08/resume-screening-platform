@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { JobOpening } from '../types';
-import { X, Briefcase, Plus, Sparkles, Building2, MapPin } from 'lucide-react';
+import { X, Briefcase, Plus, Sparkles, Building2, MapPin, Loader2 } from 'lucide-react';
+import { createJobAdmin } from '../services/apiClient';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onAddJob: (job: JobOpening) => void;
+  onJobPosted: () => void;
 }
 
-export const NewJobModal: React.FC<Props> = ({ isOpen, onClose, onAddJob }) => {
+export const NewJobModal: React.FC<Props> = ({ isOpen, onClose, onJobPosted }) => {
   const [title, setTitle] = useState('');
   const [company, setCompany] = useState('');
   const [department, setDepartment] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   if (!isOpen) return null;
 
@@ -57,7 +59,7 @@ Requirements:
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { [key: string]: string } = {};
 
@@ -70,18 +72,23 @@ Requirements:
       return;
     }
 
-    const newOpening: JobOpening = {
-      id: `jd-${Date.now()}`,
-      title: title.trim(),
-      company: company.trim(),
-      department: department.trim() || 'General',
-      location: location.trim() || 'Flexible / Remote',
-      description: description.trim(),
-      createdAt: new Date().toISOString(),
-    };
-
-    onAddJob(newOpening);
-    onClose();
+    setSubmitError('');
+    setIsSubmitting(true);
+    try {
+      await createJobAdmin({
+        title: title.trim(),
+        company: company.trim(),
+        department: department.trim() || 'General',
+        location: location.trim() || 'Flexible / Remote',
+        description: description.trim(),
+      });
+      onJobPosted();
+      onClose();
+    } catch (err: any) {
+      setSubmitError(err?.message || 'Failed to post job opening. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -225,21 +232,28 @@ Requirements:
           </div>
 
           {/* Footer */}
-          <div className="pt-2 flex items-center justify-end gap-3 border-t border-neutral-100">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
-            >
-              Cancel
-            </button>
-            <button
-              id="btn-confirm-post-job"
-              type="submit"
-              className="px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors shadow-xs"
-            >
-              Publish Job Opening
-            </button>
+          <div className="pt-2 space-y-2 border-t border-neutral-100">
+            {submitError && (
+              <p className="text-xs text-red-600">{submitError}</p>
+            )}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
+              >
+                Cancel
+              </button>
+              <button
+                id="btn-confirm-post-job"
+                type="submit"
+                disabled={isSubmitting}
+                className="px-5 py-2.5 bg-neutral-900 text-white rounded-xl text-sm font-medium hover:bg-neutral-800 transition-colors shadow-xs disabled:opacity-60 flex items-center gap-2"
+              >
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                <span>Publish Job Opening</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

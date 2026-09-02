@@ -1,12 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { 
-  JobOpening, 
-  CandidateDetails, 
-  JobApplication,
-  ScreenResumeRequest
+import {
+  JobOpening,
+  CandidateDetails
 } from '../types';
 import { validateDocxFile, extractTextFromDocx } from '../utils/docxUtils';
-import { screenCandidateResume } from '../services/screeningService';
+import { submitApplication } from '../services/apiClient';
 import { SAMPLE_CANDIDATE_PRESETS } from '../data/initialData';
 import { 
   Briefcase, 
@@ -30,11 +28,19 @@ import {
 
 interface Props {
   jobs: JobOpening[];
-  onApplicationSubmitted: (application: JobApplication) => void;
+  isLoading?: boolean;
+  onApplicationSubmitted: () => void;
 }
 
-export const CandidatePortal: React.FC<Props> = ({ jobs, onApplicationSubmitted }) => {
+export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicationSubmitted }) => {
   const [selectedJobId, setSelectedJobId] = useState<string>(jobs[0]?.id || '');
+
+  // Jobs load asynchronously from the server; default the selection once they arrive.
+  React.useEffect(() => {
+    if (!selectedJobId && jobs.length > 0) {
+      setSelectedJobId(jobs[0].id);
+    }
+  }, [jobs, selectedJobId]);
   const [candidateForm, setCandidateForm] = useState<CandidateDetails>({
     fullName: '',
     email: '',
@@ -123,8 +129,11 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, onApplicationSubmitted 
     });
     setDocxFile(fakeFile);
 
-    if (preset.suggestedJobId && jobs.some((j) => j.id === preset.suggestedJobId)) {
-      setSelectedJobId(preset.suggestedJobId);
+    const matchingJob = preset.suggestedRole
+      ? jobs.find((j) => j.title === preset.suggestedRole)
+      : undefined;
+    if (matchingJob) {
+      setSelectedJobId(matchingJob.id);
     }
   };
 
@@ -157,30 +166,15 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, onApplicationSubmitted 
     setIsSubmitting(true);
 
     try {
-      // Screen resume with server Groq endpoint
-      const screeningRequest: ScreenResumeRequest = {
-        jobTitle: selectedJob.title,
-        jobCompany: selectedJob.company,
-        jobDescription: selectedJob.description,
-        candidate: candidateForm,
-        resumeText: parsedResumeText,
-      };
-
-      const analysis = await screenCandidateResume(screeningRequest);
-
-      const newApplication: JobApplication = {
-        id: `app-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      await submitApplication({
         jobId: selectedJob.id,
-        candidate: { ...candidateForm },
+        candidate: candidateForm,
         resumeFileName: docxFile?.name || 'Candidate_Resume.docx',
         resumeFileSize: docxFile?.size || parsedResumeText.length,
-        resumeParsedText: parsedResumeText,
-        analysis,
-        submittedAt: new Date().toISOString(),
-        status: 'submitted',
-      };
+        resumeText: parsedResumeText,
+      });
 
-      onApplicationSubmitted(newApplication);
+      onApplicationSubmitted();
       setIsSubmitting(false);
       setIsSubmittedSuccess(true);
     } catch (err) {
@@ -269,6 +263,16 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, onApplicationSubmitted 
 
             {/* List of open jobs */}
             <div className="space-y-3">
+              {isLoading && jobs.length === 0 && (
+                <div className="p-6 text-center text-sm text-neutral-500 bg-white rounded-xl border border-neutral-200">
+                  Loading open positions…
+                </div>
+              )}
+              {!isLoading && jobs.length === 0 && (
+                <div className="p-6 text-center text-sm text-neutral-500 bg-white rounded-xl border border-neutral-200">
+                  No open positions right now. Check back soon.
+                </div>
+              )}
               {jobs.map((job) => {
                 const isSelected = job.id === selectedJobId;
                 return (

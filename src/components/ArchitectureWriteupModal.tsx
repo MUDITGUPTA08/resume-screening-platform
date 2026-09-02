@@ -44,16 +44,16 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
             </h3>
             <div className="space-y-2 text-neutral-700 text-xs sm:text-sm">
               <p>
-                <strong>Approach:</strong> Architected a dedicated two-sided platform strictly isolating the public applicant experience from the hiring team’s evaluation suite. Integrated client-side OpenXML <code>.docx</code> extraction via <code>mammoth</code> to enforce Word document exclusivity, and paired it with a server-side Groq (GPT-OSS 120B) pipeline generating calibrated match scores, fit summaries, gaps, and targeted interview follow-ups.
+                <strong>Approach:</strong> Architected a dedicated two-sided platform strictly isolating the public applicant experience from the hiring team’s evaluation suite, backed by a shared Postgres database (Supabase) so the flow works across different browsers and devices, not just within one session. Integrated client-side OpenXML <code>.docx</code> extraction via <code>mammoth</code> to enforce Word document exclusivity, paired with a server-side Groq (GPT-OSS 120B) pipeline generating calibrated match scores, fit summaries, gaps, and targeted interview follow-ups.
               </p>
               <p>
-                <strong>Data Modeling:</strong> Implemented a normalized one-to-many relationship (<code>JobOpening</code> &rarr; <code>JobApplication[]</code>) supporting unlimited candidate submissions per JD without fixed-schema hardcoding.
+                <strong>Data Modeling:</strong> Two Postgres tables — <code>jobs</code> and <code>applications</code> (foreign-keyed by <code>job_id</code>) — implementing a genuine one-to-many relationship, not a client-side array. Every write goes through server-side API routes; the browser never talks to the database directly.
               </p>
               <p>
-                <strong>Key Trade-offs:</strong> Prioritized an end-to-end working preview with lightweight passkey access gate and in-memory/local persistence over heavy multi-tenant SSO infrastructure. Opted for real-time synchronous screening on submission with dual fallback heuristics so evaluating applicants never hangs if third-party API quotas fluctuate.
+                <strong>Key Trade-offs:</strong> Split the API surface into public routes (<code>/api/jobs</code>, <code>/api/apply</code>) that never return score data, and admin routes (<code>/api/admin/*</code>) gated by a server-verified passcode header — so the separation holds even if someone calls the API directly, not just by convention in the UI. Kept the admin gate as a shared passcode rather than full user auth, since the brief explicitly allows a simple gate for this exercise.
               </p>
               <p>
-                <strong>Next with More Time:</strong> Implement asynchronous background screening queues (BullMQ/Redis) with webhook notifications, batch multi-file resume uploading, candidate talent pooling across multiple JDs, and ATS export integrations (Greenhouse/Lever).
+                <strong>Next with More Time:</strong> Real per-admin accounts instead of a shared passcode, server-side re-parsing of the uploaded <code>.docx</code> bytes (currently trusts client-side extraction plus a length/extension sanity check), asynchronous background screening queues, and ATS export integrations (Greenhouse/Lever).
               </p>
             </div>
           </section>
@@ -78,7 +78,7 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
                 <span>One-to-Many Modeling</span>
               </div>
               <p className="text-xs text-neutral-600">
-                Each <code>JobOpening</code> holds unique ID, metadata, and full JD text. Submissions reference <code>jobId</code>, allowing multiple applicants per opening. Filter, sort, and aggregate analytics dynamically calculate per-role statistics.
+                A Postgres <code>jobs</code> table holds each opening's metadata and full JD text; <code>applications</code> references it via <code>job_id</code> with a foreign key, allowing unlimited applicants per opening. Filter, sort, and aggregate analytics dynamically calculate per-role statistics from live data.
               </p>
             </div>
 
@@ -89,7 +89,7 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
                 <span>Strict Access Separation</span>
               </div>
               <p className="text-xs text-neutral-600">
-                Candidate submission views return solely: <em>"Thanks, we've received your application. We'll reach out soon."</em> No score, ranking, or LLM tokens are rendered on the candidate portal. Admin views are gated behind authenticated credentials.
+                The public <code>/api/apply</code> endpoint returns only <em>"Thanks, we've received your application. We'll reach out soon."</em> — it never has score data in its response payload, so there's nothing to leak even by inspecting network traffic. Score data only exists behind <code>/api/admin/*</code> routes, which verify a passcode header server-side on every request, not just in the UI.
               </p>
             </div>
 
