@@ -92,14 +92,14 @@ export const AdminDashboard: React.FC<Props> = ({
       {/* Top Banner & Overview */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl border border-neutral-200 shadow-xs">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 bg-neutral-900 text-white rounded-lg">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="p-1.5 bg-neutral-900 text-white rounded-lg shrink-0">
               <ShieldCheck className="w-4 h-4" />
             </span>
-            <h1 className="text-xl font-bold text-neutral-900 tracking-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-neutral-900 tracking-tight">
               Hiring Team Admin Dashboard
             </h1>
-            <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+            <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 whitespace-nowrap">
               Admin-Only Score Room
             </span>
           </div>
