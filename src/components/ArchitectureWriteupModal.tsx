@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, BookOpen, ShieldCheck, Database, Cpu, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, BookOpen, Cpu, CheckCircle2 } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;

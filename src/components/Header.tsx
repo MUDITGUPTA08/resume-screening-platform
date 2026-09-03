@@ -1,5 +1,5 @@
 import React from 'react';
-import { Briefcase, ShieldCheck, UserCheck, BookOpen, Lock, Unlock } from 'lucide-react';
+import { Briefcase, UserCheck, BookOpen, Lock, Unlock } from 'lucide-react';
 
 interface Props {
   activeTab: 'candidate' | 'admin';

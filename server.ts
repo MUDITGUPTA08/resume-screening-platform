@@ -8,9 +8,10 @@ import {
   handleAdminCreateJob,
   handleAdminListApplications,
   handleAdminUpdateApplicationStatus,
-  ApiError,
+  sendApiError,
+  sendPublicApiError,
 } from './src/server/routes.js';
-import { isValidAdminPasscode, getAdminPasscodeFromRequest } from './src/server/adminAuth.js';
+import { requireAdmin as checkAdminAuthorized } from './src/server/adminAuth.js';
 
 dotenv.config();
 
@@ -20,17 +21,7 @@ const PORT = 3000;
 app.use(express.json({ limit: '10mb' }));
 
 function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
-  const passcode = getAdminPasscodeFromRequest(req.headers as any);
-  if (!isValidAdminPasscode(passcode)) {
-    res.status(401).json({ error: 'Invalid or missing admin passcode.' });
-    return;
-  }
-  next();
-}
-
-function sendApiError(res: express.Response, err: unknown) {
-  const status = err instanceof ApiError ? err.status : 500;
-  res.status(status).json({ error: (err as Error).message || 'Internal error' });
+  if (checkAdminAuthorized(req.headers as any, res)) next();
 }
 
 app.get('/api/health', (req, res) => {
@@ -55,9 +46,7 @@ app.post('/api/apply', async (req, res) => {
   try {
     res.json(await handleApply(req.body));
   } catch (err) {
-    const status = err instanceof ApiError ? err.status : 500;
-    const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
-    res.status(status).json({ error: message });
+    sendPublicApiError(res, err);
   }
 });
 

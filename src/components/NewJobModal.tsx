@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Briefcase, Plus, Sparkles, Building2, MapPin, Loader2 } from 'lucide-react';
+import { X, Briefcase, Sparkles, Loader2 } from 'lucide-react';
 import { createJobAdmin } from '../services/apiClient';
+import { FormField } from './FormField';
 
 interface Props {
   isOpen: boolean;
@@ -143,93 +144,64 @@ Requirements:
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                Job Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="input-job-title"
-                type="text"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value);
-                  if (errors.title) setErrors((prev) => ({ ...prev, title: '' }));
-                }}
-                placeholder="e.g. Founders Office Associate"
-                className="w-full px-3 py-2 text-sm bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white"
-              />
-              {errors.title && <p className="text-[11px] text-red-500 mt-1">{errors.title}</p>}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                Company / Brand <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="input-job-company"
-                type="text"
-                value={company}
-                onChange={(e) => {
-                  setCompany(e.target.value);
-                  if (errors.company) setErrors((prev) => ({ ...prev, company: '' }));
-                }}
-                placeholder="e.g. Satva Partners"
-                className="w-full px-3 py-2 text-sm bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white"
-              />
-              {errors.company && <p className="text-[11px] text-red-500 mt-1">{errors.company}</p>}
-            </div>
+            <FormField
+              id="input-job-title"
+              label="Job Title"
+              value={title}
+              onChange={(v) => {
+                setTitle(v);
+                if (errors.title) setErrors((prev) => ({ ...prev, title: '' }));
+              }}
+              placeholder="e.g. Founders Office Associate"
+              error={errors.title}
+            />
+            <FormField
+              id="input-job-company"
+              label="Company / Brand"
+              value={company}
+              onChange={(v) => {
+                setCompany(v);
+                if (errors.company) setErrors((prev) => ({ ...prev, company: '' }));
+              }}
+              placeholder="e.g. Satva Partners"
+              error={errors.company}
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                Department / Function
-              </label>
-              <input
-                id="input-job-dept"
-                type="text"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                placeholder="e.g. Strategy & Operations"
-                className="w-full px-3 py-2 text-sm bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-neutral-800 mb-1">
-                Location
-              </label>
-              <input
-                id="input-job-location"
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="e.g. Bengaluru, India (Hybrid)"
-                className="w-full px-3 py-2 text-sm bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-neutral-800 mb-1">
-              Full Job Description (JD) Text <span className="text-red-500">*</span>
-            </label>
-            <p className="text-[11px] text-neutral-500 mb-1">
-              Include role overview, responsibilities, requirements, and qualifications. The LLM will evaluate applicant resumes directly against this text.
-            </p>
-            <textarea
-              id="input-job-description"
-              rows={8}
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                if (errors.description) setErrors((prev) => ({ ...prev, description: '' }));
-              }}
-              placeholder="Paste the full job opening requirements, responsibilities, and qualifications..."
-              className="w-full px-3 py-2 text-sm bg-neutral-50 border border-neutral-300 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white font-mono text-xs leading-relaxed"
+            <FormField
+              id="input-job-dept"
+              label="Department / Function"
+              value={department}
+              onChange={setDepartment}
+              placeholder="e.g. Strategy & Operations"
+              required={false}
             />
-            {errors.description && <p className="text-[11px] text-red-500 mt-1">{errors.description}</p>}
+            <FormField
+              id="input-job-location"
+              label="Location"
+              value={location}
+              onChange={setLocation}
+              placeholder="e.g. Bengaluru, India (Hybrid)"
+              required={false}
+            />
           </div>
+
+          <FormField
+            id="input-job-description"
+            label="Full Job Description (JD) Text"
+            value={description}
+            onChange={(v) => {
+              setDescription(v);
+              if (errors.description) setErrors((prev) => ({ ...prev, description: '' }));
+            }}
+            placeholder="Paste the full job opening requirements, responsibilities, and qualifications..."
+            error={errors.description}
+            helpText="Include role overview, responsibilities, requirements, and qualifications. The LLM will evaluate applicant resumes directly against this text."
+            multiline
+            rows={8}
+            monospace
+          />
 
           {/* Footer */}
           <div className="pt-2 space-y-2 border-t border-neutral-100">

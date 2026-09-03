@@ -1,5 +1,6 @@
 import { getSupabaseClient } from './supabase.js';
 import type { ScreeningResult } from './screening.js';
+import type { CandidateDetails, JobApplication } from '../types.js';
 
 export interface JobRecord {
   id: string;
@@ -14,19 +15,12 @@ export interface JobRecord {
 export interface ApplicationRecord {
   id: string;
   jobId: string;
-  candidate: {
-    fullName: string;
-    email: string;
-    phone: string;
-    age: string;
-    currentLocation: string;
-    address: string;
-  };
+  candidate: CandidateDetails;
   resumeFileName: string;
   resumeFileSize: number;
   resumeParsedText: string;
   analysis: ScreeningResult;
-  status: 'submitted' | 'reviewed' | 'shortlisted' | 'rejected';
+  status: JobApplication['status'];
   submittedAt: string;
 }
 

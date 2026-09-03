@@ -6,6 +6,7 @@ import {
 import { validateDocxFile, extractTextFromDocx } from '../utils/docxUtils';
 import { submitApplication } from '../services/apiClient';
 import { SAMPLE_CANDIDATE_PRESETS } from '../data/initialData';
+import { FormField } from './FormField';
 import {
   Briefcase,
   Building2,
@@ -22,8 +23,6 @@ import {
   Home,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
-  Info,
   X,
   PartyPopper
 } from 'lucide-react';
@@ -444,132 +443,74 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
               
               {/* Personal Details Row 1 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <User className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      id="input-candidate-fullname"
-                      type="text"
-                      value={candidateForm.fullName}
-                      onChange={(e) => handleInputChange('fullName', e.target.value)}
-                      placeholder="e.g. Priya Sharma"
-                      className={`w-full pl-9 pr-3 py-2 text-sm bg-neutral-50 border rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all ${
-                        formErrors.fullName ? 'border-red-400 bg-red-50/40' : 'border-neutral-300'
-                      }`}
-                    />
-                  </div>
-                  {formErrors.fullName && <p className="text-[11px] text-red-500 mt-1">{formErrors.fullName}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      id="input-candidate-email"
-                      type="email"
-                      value={candidateForm.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      placeholder="e.g. priya.sharma@example.com"
-                      className={`w-full pl-9 pr-3 py-2 text-sm bg-neutral-50 border rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all ${
-                        formErrors.email ? 'border-red-400 bg-red-50/40' : 'border-neutral-300'
-                      }`}
-                    />
-                  </div>
-                  {formErrors.email && <p className="text-[11px] text-red-500 mt-1">{formErrors.email}</p>}
-                </div>
+                <FormField
+                  id="input-candidate-fullname"
+                  label="Full Name"
+                  icon={User}
+                  value={candidateForm.fullName}
+                  onChange={(v) => handleInputChange('fullName', v)}
+                  placeholder="e.g. Priya Sharma"
+                  error={formErrors.fullName}
+                />
+                <FormField
+                  id="input-candidate-email"
+                  label="Email Address"
+                  icon={Mail}
+                  type="email"
+                  value={candidateForm.email}
+                  onChange={(v) => handleInputChange('email', v)}
+                  placeholder="e.g. priya.sharma@example.com"
+                  error={formErrors.email}
+                />
               </div>
 
               {/* Personal Details Row 2 */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      id="input-candidate-phone"
-                      type="tel"
-                      value={candidateForm.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                      placeholder="+91 98765 43210"
-                      className={`w-full pl-9 pr-3 py-2 text-sm bg-neutral-50 border rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all ${
-                        formErrors.phone ? 'border-red-400 bg-red-50/40' : 'border-neutral-300'
-                      }`}
-                    />
-                  </div>
-                  {formErrors.phone && <p className="text-[11px] text-red-500 mt-1">{formErrors.phone}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Age <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Calendar className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      id="input-candidate-age"
-                      type="number"
-                      min="18"
-                      max="85"
-                      value={candidateForm.age}
-                      onChange={(e) => handleInputChange('age', e.target.value)}
-                      placeholder="26"
-                      className={`w-full pl-9 pr-3 py-2 text-sm bg-neutral-50 border rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all ${
-                        formErrors.age ? 'border-red-400 bg-red-50/40' : 'border-neutral-300'
-                      }`}
-                    />
-                  </div>
-                  {formErrors.age && <p className="text-[11px] text-red-500 mt-1">{formErrors.age}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-neutral-700 mb-1">
-                    Current Location / Place <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <MapPin className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      id="input-candidate-location"
-                      type="text"
-                      value={candidateForm.currentLocation}
-                      onChange={(e) => handleInputChange('currentLocation', e.target.value)}
-                      placeholder="e.g. Bengaluru, KA"
-                      className={`w-full pl-9 pr-3 py-2 text-sm bg-neutral-50 border rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all ${
-                        formErrors.currentLocation ? 'border-red-400 bg-red-50/40' : 'border-neutral-300'
-                      }`}
-                    />
-                  </div>
-                  {formErrors.currentLocation && <p className="text-[11px] text-red-500 mt-1">{formErrors.currentLocation}</p>}
-                </div>
+                <FormField
+                  id="input-candidate-phone"
+                  label="Phone Number"
+                  icon={Phone}
+                  type="tel"
+                  value={candidateForm.phone}
+                  onChange={(v) => handleInputChange('phone', v)}
+                  placeholder="+91 98765 43210"
+                  error={formErrors.phone}
+                />
+                <FormField
+                  id="input-candidate-age"
+                  label="Age"
+                  icon={Calendar}
+                  type="number"
+                  min="18"
+                  max="85"
+                  value={candidateForm.age}
+                  onChange={(v) => handleInputChange('age', v)}
+                  placeholder="26"
+                  error={formErrors.age}
+                />
+                <FormField
+                  id="input-candidate-location"
+                  label="Current Location / Place"
+                  icon={MapPin}
+                  value={candidateForm.currentLocation}
+                  onChange={(v) => handleInputChange('currentLocation', v)}
+                  placeholder="e.g. Bengaluru, KA"
+                  error={formErrors.currentLocation}
+                />
               </div>
 
               {/* Address */}
-              <div>
-                <label className="block text-xs font-medium text-neutral-700 mb-1">
-                  Full Residential Address <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Home className="w-4 h-4 text-neutral-400 absolute left-3 top-3" />
-                  <textarea
-                    id="input-candidate-address"
-                    rows={2}
-                    value={candidateForm.address}
-                    onChange={(e) => handleInputChange('address', e.target.value)}
-                    placeholder="e.g. Flat 304, Green Heights, Indiranagar, Bengaluru - 560038"
-                    className={`w-full pl-9 pr-3 py-2 text-sm bg-neutral-50 border rounded-xl focus:outline-hidden focus:ring-2 focus:ring-neutral-900 focus:bg-white transition-all ${
-                      formErrors.address ? 'border-red-400 bg-red-50/40' : 'border-neutral-300'
-                    }`}
-                  />
-                </div>
-                {formErrors.address && <p className="text-[11px] text-red-500 mt-1">{formErrors.address}</p>}
-              </div>
+              <FormField
+                id="input-candidate-address"
+                label="Full Residential Address"
+                icon={Home}
+                value={candidateForm.address}
+                onChange={(v) => handleInputChange('address', v)}
+                placeholder="e.g. Flat 304, Green Heights, Indiranagar, Bengaluru - 560038"
+                error={formErrors.address}
+                multiline
+                rows={2}
+              />
 
               {/* Resume/CV Upload Field (Word Documents .docx ONLY - NOT PDF) */}
               <div className="pt-2">

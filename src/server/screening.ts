@@ -1,13 +1,10 @@
-export interface ScreeningResult {
-  matchScore: number;
-  verdict: 'Strong Match' | 'Potential Match' | 'Moderate Match' | 'Low Match';
-  fitSummary: string;
-  strengths: string[];
-  gaps: string[];
-  followUpQuestions: string[];
-  modelUsed: string;
-  screenedAt: string;
-}
+import type { MatchVerdict, ScreeningAnalysis } from '../types.js';
+import { verdictForScore } from '../types.js';
+
+// The server's screening result IS the client-facing ScreeningAnalysis shape --
+// one definition, imported everywhere, instead of two independently
+// maintained copies that could silently drift apart.
+export type ScreeningResult = ScreeningAnalysis;
 
 export interface ScreenParams {
   jobTitle: string;
@@ -67,11 +64,7 @@ function performHeuristicScreening(params: {
     score = Math.min(score + 4, 98);
   }
 
-  let verdict: ScreeningResult['verdict'] = 'Moderate Match';
-  if (score >= 85) verdict = 'Strong Match';
-  else if (score >= 70) verdict = 'Potential Match';
-  else if (score >= 55) verdict = 'Moderate Match';
-  else verdict = 'Low Match';
+  const verdict = verdictForScore(score);
 
   return {
     matchScore: score,
@@ -194,9 +187,10 @@ Return ONLY a valid JSON object with the following structure:
   const parsedData = JSON.parse(responseText);
 
   const matchScore = typeof parsedData.matchScore === 'number' ? Math.min(Math.max(parsedData.matchScore, 0), 100) : 75;
-  let verdict = parsedData.verdict;
-  if (!['Strong Match', 'Potential Match', 'Moderate Match', 'Low Match'].includes(verdict)) {
-    verdict = matchScore >= 85 ? 'Strong Match' : matchScore >= 70 ? 'Potential Match' : matchScore >= 55 ? 'Moderate Match' : 'Low Match';
+  let verdict: MatchVerdict = parsedData.verdict;
+  const validVerdicts: MatchVerdict[] = ['Strong Match', 'Potential Match', 'Moderate Match', 'Low Match'];
+  if (!validVerdicts.includes(verdict)) {
+    verdict = verdictForScore(matchScore);
   }
 
   return {

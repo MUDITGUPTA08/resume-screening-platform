@@ -17,6 +17,31 @@ export class ApiError extends Error {
   }
 }
 
+// Minimal structural type covering both Express's Response and Vercel's
+// VercelResponse -- avoids importing either framework's types into this
+// framework-agnostic module just to share this one helper.
+interface JsonResponder {
+  status(code: number): { json(body: unknown): void };
+}
+
+// Shared by every route handler (Express in server.ts, and each Vercel
+// function in api/**) so the ApiError -> HTTP status mapping and the
+// generic-500 fallback live in exactly one place.
+export function sendApiError(res: JsonResponder, err: unknown): void {
+  const status = err instanceof ApiError ? err.status : 500;
+  const message = err instanceof ApiError ? err.message : (err as Error)?.message || 'Internal error';
+  res.status(status).json({ error: message });
+}
+
+// Same as sendApiError, but for public candidate-facing endpoints: never
+// surface a non-ApiError message (which could leak internal detail) to
+// someone applying for a job.
+export function sendPublicApiError(res: JsonResponder, err: unknown): void {
+  const status = err instanceof ApiError ? err.status : 500;
+  const message = err instanceof ApiError ? err.message : 'Something went wrong. Please try again.';
+  res.status(status).json({ error: message });
+}
+
 function serializeJob(job: JobRecord) {
   return {
     id: job.id,
