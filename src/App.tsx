@@ -61,8 +61,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    loadPublicJobs();
-  }, [loadPublicJobs]);
+    if (activeTab === 'candidate') {
+      loadPublicJobs();
+    }
+  }, [activeTab, loadPublicJobs]);
 
   useEffect(() => {
     if (activeTab === 'admin' && isAdminAuthenticated) {
