@@ -39,27 +39,41 @@ export default function App() {
   const [isNewJobModalOpen, setIsNewJobModalOpen] = useState<boolean>(false);
   const [isWriteupOpen, setIsWriteupOpen] = useState<boolean>(false);
 
+  // Tab switches can fire several silent background refetches for the same
+  // resource before any of them return, and network responses can resolve
+  // out of order -- an older in-flight request finishing after a newer one
+  // would otherwise clobber fresher (or optimistically-updated) state with
+  // stale data, which is what produced the "there, then not" flicker.
+  // Each loader tags its own call with a sequence number and only applies
+  // the response if it's still the most recent call for that resource.
+  const publicJobsRequestId = React.useRef(0);
+  const adminDataRequestId = React.useRef(0);
+
   const loadPublicJobs = useCallback(async (options?: { silent?: boolean }) => {
+    const requestId = ++publicJobsRequestId.current;
     try {
       if (!options?.silent) {
         setIsLoadingJobs(true);
       }
       setLoadError('');
       const data = await fetchOpenJobs();
+      if (requestId !== publicJobsRequestId.current) return;
       setPublicJobs(data);
     } catch (e) {
       console.error('Failed to load job openings', e);
+      if (requestId !== publicJobsRequestId.current) return;
       if (!options?.silent) {
         setLoadError('Could not load job openings. Please refresh the page.');
       }
     } finally {
-      if (!options?.silent) {
+      if (requestId === publicJobsRequestId.current && !options?.silent) {
         setIsLoadingJobs(false);
       }
     }
   }, []);
 
   const loadAdminData = useCallback(async (options?: { silent?: boolean }) => {
+    const requestId = ++adminDataRequestId.current;
     try {
       if (!options?.silent) {
         setIsLoadingAdminData(true);
@@ -68,12 +82,13 @@ export default function App() {
         fetchAdminJobs(),
         fetchAdminApplications(),
       ]);
+      if (requestId !== adminDataRequestId.current) return;
       setAdminJobs(fetchedJobs);
       setApplications(fetchedApplications);
     } catch (e) {
       console.error('Failed to load admin data', e);
     } finally {
-      if (!options?.silent) {
+      if (requestId === adminDataRequestId.current && !options?.silent) {
         setIsLoadingAdminData(false);
       }
     }
@@ -144,6 +159,11 @@ export default function App() {
   const handleUpdateJobStatus = async (jobId: string, status: JobOpening['status']) => {
     try {
       await updateJobStatusAdmin(jobId, status);
+      // Invalidate any refetch that was already in flight before this call
+      // resolved -- otherwise it can land afterward with pre-close data and
+      // stomp the optimistic update below right back to the old status.
+      publicJobsRequestId.current += 1;
+      adminDataRequestId.current += 1;
       setAdminJobs((prev) => prev.map((job) => (job.id === jobId ? { ...job, status } : job)));
       // Keep the public (open-only) list honest too: a newly-closed job is
       // removed from it immediately, a reopened one is picked up on the
