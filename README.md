@@ -6,7 +6,40 @@ See the in-app **Project Write-Up** (header nav) for the full approach, trade-of
 
 ## Architecture
 
-![Architecture diagram: the Candidate Portal and Hiring Dashboard both talk to a server layer that persists to Supabase. The candidate path (public) hits handleApply(), which screens via Groq with a heuristic fallback and returns only a confirmation message. The admin path is gated by a server-side passcode check on every request before any database read.](docs/architecture.svg)
+```mermaid
+flowchart LR
+    C["👤 Candidate Portal
+Public"]
+    H["🔒 Hiring Team
+Passcode Protected"]
+    GATE{"🛡️ Passcode
+Check"}
+    API["⚙️ Vercel Backend / API
+Validates • Screens • Stores"]
+    LLM["🧠 Groq LLM
+AI Resume Screening"]
+    FB["🧮 Heuristic Fallback
+If Groq unavailable"]
+    DB["🗄️ Supabase PostgreSQL
+Jobs + Applications"]
+    REJECT["⛔ 401 Unauthorized"]
+
+    C -->|"Apply with .docx"| API
+    H -->|"Request"| GATE
+    GATE -->|"Valid ✓"| API
+    GATE -->|"Invalid ✗"| REJECT
+
+    API -->|"Resume + Job Description"| LLM
+    LLM -->|"Score + Analysis"| API
+    LLM -.->|"unreachable"| FB
+    FB -.->|"deterministic score"| API
+
+    API <-->|"Read / Write"| DB
+
+    style GATE fill:#fff7ed,stroke:#b45309,color:#111
+    style REJECT fill:#fee2e2,stroke:#dc2626,color:#111
+    style FB fill:#faf5ff,stroke:#7c3aed,stroke-dasharray: 4 3,color:#111
+```
 
 Two request paths converge on one server layer:
 
