@@ -151,19 +151,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="py-6 border-t border-neutral-200/80 bg-white/60 text-center text-xs text-neutral-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Resume Screener</span>
-          <button
-            onClick={() => setIsWriteupOpen(true)}
-            className="hover:text-neutral-900 underline transition-colors"
-          >
-            Project Write-Up
-          </button>
-        </div>
-      </footer>
-
       {/* Modals & Dialogs */}
       <AdminGateModal
         isOpen={isAdminGateOpen}
