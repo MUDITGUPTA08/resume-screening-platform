@@ -36,7 +36,28 @@ export async function handleListJobs() {
   return jobs.map(serializeJob);
 }
 
-const MIN_RESUME_LENGTH = 20;
+const MIN_RESUME_LENGTH = 150;
+const MIN_RESUME_WORDS = 25;
+
+// Server-side sanity check on the extracted resume text. We don't re-parse the
+// original .docx bytes server-side (the client already did that with mammoth),
+// so this can't catch a renamed non-.docx file -- but it catches the common
+// abuse case of a trivially short or non-prose "resume" slipping past a
+// client that was tampered with or bypassed entirely (e.g. a direct API call).
+function looksLikeResumeText(text: string): boolean {
+  const trimmed = text.trim();
+  if (trimmed.length < MIN_RESUME_LENGTH) return false;
+
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length < MIN_RESUME_WORDS) return false;
+
+  // Reject content that's mostly a handful of characters repeated (garbage /
+  // binary leakage) rather than actual prose.
+  const uniqueChars = new Set(trimmed.toLowerCase().replace(/\s/g, '')).size;
+  if (uniqueChars < 10) return false;
+
+  return true;
+}
 
 export async function handleApply(body: any) {
   const { jobId, candidate, resumeFileName, resumeFileSize, resumeText } = body ?? {};
@@ -50,8 +71,8 @@ export async function handleApply(body: any) {
   if (typeof resumeFileName !== 'string' || !resumeFileName.toLowerCase().endsWith('.docx')) {
     throw new ApiError(400, 'Only .docx resumes are accepted.');
   }
-  if (typeof resumeText !== 'string' || resumeText.trim().length < MIN_RESUME_LENGTH) {
-    throw new ApiError(400, 'Resume content is missing or unreadable.');
+  if (typeof resumeText !== 'string' || !looksLikeResumeText(resumeText)) {
+    throw new ApiError(400, 'Resume content is missing, too short, or unreadable. Please upload a complete .docx resume.');
   }
 
   const job = await getJobById(jobId);

@@ -53,7 +53,7 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
                 <strong>Key Trade-offs:</strong> Split the API surface into public routes (<code>/api/jobs</code>, <code>/api/apply</code>) that never return score data, and admin routes (<code>/api/admin/*</code>) gated by a server-verified passcode header — so the separation holds even if someone calls the API directly, not just by convention in the UI. Kept the admin gate as a shared passcode rather than full user auth, since the brief explicitly allows a simple gate for this exercise.
               </p>
               <p>
-                <strong>Next with More Time:</strong> Real per-admin accounts instead of a shared passcode, server-side re-parsing of the uploaded <code>.docx</code> bytes (currently trusts client-side extraction plus a length/extension sanity check), asynchronous background screening queues, and ATS export integrations (Greenhouse/Lever).
+                <strong>Next with More Time:</strong> Real per-admin accounts instead of a shared passcode, sending the original <code>.docx</code> bytes to the server for independent re-parsing (currently the server validates the extracted text's shape and length, not the file's actual binary/MIME signature), asynchronous background screening queues, and ATS export integrations (Greenhouse/Lever).
               </p>
             </div>
           </section>
@@ -100,7 +100,7 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
                 <span>.docx Only & Fallbacks</span>
               </div>
               <p className="text-xs text-neutral-600">
-                Strict MIME and extension checking blocks PDF or legacy .doc uploads. Robust extraction parses headers, bullets, and varied resume formats. If the LLM service experiences latency or quota limits, an intelligent heuristic fallback ensures zero applicant dropped calls.
+                Client-side extension checking blocks PDF or legacy .doc uploads before parsing; the server independently re-validates the extracted text (extension, minimum length and word count, non-garbage content) before it's ever screened or stored, so a bypassed or tampered client can't slip a non-resume through. If the LLM service experiences latency or quota limits, a deterministic heuristic fallback ensures no applicant is dropped.
               </p>
             </div>
           </div>
