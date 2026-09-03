@@ -20,6 +20,18 @@ const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
+// Malformed JSON bodies would otherwise fall through to Express's default
+// error handler, which returns an HTML page containing the local
+// filesystem path and a full stack trace -- fine for a local-only dev
+// server, but worth a clean JSON response instead.
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err?.type === 'entity.parse.failed') {
+    res.status(400).json({ error: 'Malformed JSON in request body.' });
+    return;
+  }
+  next(err);
+});
+
 function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
   if (checkAdminAuthorized(req.headers as any, res)) next();
 }
@@ -48,6 +60,12 @@ app.post('/api/apply', async (req, res) => {
   } catch (err) {
     sendPublicApiError(res, err);
   }
+});
+// Any other method on this path would otherwise fall through to Vite's SPA
+// catch-all and return the app shell with a 200 -- reject it explicitly,
+// matching the Vercel function's behavior in production.
+app.all('/api/apply', (req, res) => {
+  res.status(405).json({ error: 'Method not allowed' });
 });
 
 // ---- Admin routes ----

@@ -55,6 +55,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
   const [parsedResumeText, setParsedResumeText] = useState<string>('');
   const [fileError, setFileError] = useState<string>('');
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [submitError, setSubmitError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmittedSuccess, setIsSubmittedSuccess] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -181,6 +182,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
     if (!selectedJob) return;
 
     setIsSubmitting(true);
+    setSubmitError('');
 
     try {
       await submitApplication({
@@ -191,13 +193,20 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
         resumeText: parsedResumeText,
       });
 
+      // LLM screening failures never reach here -- the server already falls
+      // back to a deterministic heuristic score and still persists the
+      // application, so a thrown error at this point means the submission
+      // itself genuinely failed (validation, stale job, network) and was
+      // never saved. Showing "success" for that would silently lose a real
+      // application, so only a true persistence failure is surfaced here --
+      // as a plain retry prompt, never any score or analysis detail.
       onApplicationSubmitted();
       setIsSubmitting(false);
       setIsSubmittedSuccess(true);
     } catch (err) {
       console.error('Submission processing error:', err);
       setIsSubmitting(false);
-      setIsSubmittedSuccess(true); // Always show success to applicant as required by brief
+      setSubmitError('Something went wrong sending your application. Please try again.');
     }
   };
 
@@ -525,6 +534,9 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
 
                 <div
                   id="resume-dropzone"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Upload resume, .docx only"
                   onDragOver={(e) => {
                     e.preventDefault();
                     setIsDragging(true);
@@ -532,7 +544,13 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={handleDrop}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all focus:outline-hidden focus-visible:ring-2 focus-visible:ring-neutral-900 ${
                     isDragging
                       ? 'border-neutral-900 bg-neutral-50'
                       : docxFile
@@ -594,6 +612,14 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
                   </div>
                 )}
               </div>
+
+              {/* Submit Error */}
+              {submitError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-xs text-red-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{submitError}</span>
+                </div>
+              )}
 
               {/* Submit Button */}
               <div className="pt-4">
