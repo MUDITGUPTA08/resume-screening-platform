@@ -1,0 +1,20 @@
+[
+  {
+    "key": "growth",
+    "label": "+ Growth Manager",
+    "title": "Growth & Performance Marketing Manager",
+    "company": "Aura Living",
+    "department": "Growth Marketing",
+    "location": "Delhi NCR, India",
+    "description": "About Aura Living:\nAura Living is a direct-to-consumer home wellness and ergonomics brand revolutionizing how modern professionals live and work.\n\nKey Responsibilities:\n• Own paid user acquisition across Meta, Google Ads, and emerging channels with an 8-figure annual budget.\n• Build continuous multivariate A/B testing loops for landing pages, ad copy, and creative assets.\n• Drive customer acquisition cost (CAC) optimization and ROAS tracking across blended attribution models.\n• Partner with product and engineering to optimize customer checkout funnel and conversion rate.\n\nRequirements:\n• 3–5 years scaling performance marketing at a fast-growing D2C brand or high-growth consumer tech startup.\n• Deep analytical rigor: cohort analyses, CAC-to-LTV ratios, and analytics tooling (GA4, Mixpanel).\n• Strong creative intuition paired with experimental discipline."
+  },
+  {
+    "key": "product",
+    "label": "+ Product Manager",
+    "title": "Senior Product Manager (Core Experience)",
+    "company": "OmniFlow",
+    "department": "Product Management",
+    "location": "Bengaluru / Remote",
+    "description": "About OmniFlow:\nOmniFlow provides enterprise collaboration infrastructure for globally distributed teams.\n\nKey Responsibilities:\n• Lead product discovery, roadmapping, and feature execution for the core collaboration suite.\n• Work with engineering, UX research, and design leaders to deliver enterprise-grade workflows.\n• Measure usage analytics, adoption velocity, and Net Promoter Scores.\n\nRequirements:\n• 4+ years of product management experience in B2B SaaS.\n• Proven track record shipping complex, highly scalable web applications.\n• Strong technical background with API architectures and system design."
+  }
+]

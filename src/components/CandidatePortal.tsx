@@ -8,6 +8,8 @@ import { submitApplication } from '../services/apiClient';
 import { SAMPLE_CANDIDATE_PRESETS } from '../data/initialData';
 import { FormField } from './FormField';
 import { SelectableCard } from './SelectableCard';
+import { EmptyState } from './EmptyState';
+import { Skeleton, SkeletonList } from './Skeleton';
 import { usePersistentState } from '../hooks/usePersistentState';
 import {
   Briefcase,
@@ -362,30 +364,25 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
             {/* List of open jobs */}
             <div className="space-y-3">
               {isLoading && jobs.length === 0 && (
-                <>
-                  {[0, 1, 2].map((i) => (
-                    <div
-                      key={i}
-                      className="p-4 rounded-xl border-2 border-neutral-200 bg-white space-y-3"
-                      style={{ animationDelay: `${i * 80}ms` }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="skeleton h-3 w-20 rounded" />
-                        <div className="skeleton h-3.5 w-12 rounded-full" />
-                      </div>
-                      <div className="skeleton h-4 w-3/4 rounded" />
-                      <div className="flex items-center gap-3">
-                        <div className="skeleton h-3 w-24 rounded" />
-                        <div className="skeleton h-3 w-20 rounded" />
-                      </div>
-                    </div>
-                  ))}
-                </>
+                <SkeletonList count={3} className="p-4 rounded-xl border-2 border-neutral-200 bg-white space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-3 w-20" />
+                    <Skeleton className="h-3.5 w-12 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-3/4" />
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </SkeletonList>
               )}
               {!isLoading && jobs.length === 0 && (
-                <div className="p-6 text-center text-sm text-neutral-500 bg-white rounded-xl border border-neutral-200 animate-fade-in">
-                  No open positions right now. Check back soon.
-                </div>
+                <EmptyState
+                  icon={Briefcase}
+                  className="p-8"
+                  title="No open positions right now"
+                  description="Check back soon — new roles are posted here as they open."
+                />
               )}
               {jobs.map((job, index) => {
                 const isSelected = job.id === selectedJobId;

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { JobOpening, JobApplication, MatchVerdict, SCORE_THRESHOLDS } from '../types';
 import { ApplicantCard } from './ApplicantCard';
 import { SelectableCard } from './SelectableCard';
+import { EmptyState } from './EmptyState';
+import { Skeleton, SkeletonList } from './Skeleton';
 import { usePersistentState } from '../hooks/usePersistentState';
 import { scoreSearchRelevance } from '../utils/searchRelevance';
 import {
@@ -167,15 +169,13 @@ export const AdminDashboard: React.FC<Props> = ({
       {/* Aggregate Metrics Bar */}
       {isLoading && jobs.length === 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="skeleton w-6 h-6 rounded-lg" />
-                <div className="skeleton h-3 w-16 rounded" />
-              </div>
-              <div className="skeleton h-6 w-10 rounded" />
+          <SkeletonList count={4} className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <Skeleton className="w-6 h-6 rounded-lg" />
+              <Skeleton className="h-3 w-16" />
             </div>
-          ))}
+            <Skeleton className="h-6 w-10" />
+          </SkeletonList>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -232,42 +232,39 @@ export const AdminDashboard: React.FC<Props> = ({
 
           {isLoading && jobs.length === 0 && (
             <div className="space-y-2.5">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="p-4 rounded-xl border border-neutral-200 bg-white space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1.5">
-                      <div className="skeleton h-2.5 w-16 rounded" />
-                      <div className="skeleton h-4 w-32 rounded" />
-                    </div>
-                    <div className="skeleton h-4 w-14 rounded-full" />
+              <SkeletonList count={3} className="p-4 rounded-xl border border-neutral-200 bg-white space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-2.5 w-16" />
+                    <Skeleton className="h-4 w-32" />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="skeleton h-3 w-20 rounded" />
-                    <div className="skeleton h-3 w-16 rounded" />
-                  </div>
-                  <div className="skeleton h-7 w-full rounded-lg" />
+                  <Skeleton className="h-4 w-14 rounded-full" />
                 </div>
-              ))}
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+                <Skeleton className="h-7 w-full rounded-lg" />
+              </SkeletonList>
             </div>
           )}
 
           {!isLoading && jobs.length === 0 && (
-            <div className="p-10 bg-white rounded-2xl border border-neutral-200 text-center space-y-3 animate-fade-in">
-              <div className="w-12 h-12 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400">
-                <Briefcase className="w-6 h-6" />
-              </div>
-              <h3 className="font-semibold text-neutral-900 text-sm">No open positions yet</h3>
-              <p className="text-xs text-neutral-500 max-w-[24ch] mx-auto">
-                Create your first job opening to start accepting applications.
-              </p>
-              <button
-                onClick={onOpenNewJobModal}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-neutral-900 text-white rounded-lg text-xs font-medium hover:bg-neutral-800 transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Post New Job
-              </button>
-            </div>
+            <EmptyState
+              icon={Briefcase}
+              className="p-10"
+              title="No open positions yet"
+              description="Create your first job opening to start accepting applications."
+              action={
+                <button
+                  onClick={onOpenNewJobModal}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-neutral-900 text-white rounded-lg text-xs font-medium hover:bg-neutral-800 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Post New Job
+                </button>
+              }
+            />
           )}
 
           <div className="space-y-2.5">
@@ -489,48 +486,46 @@ export const AdminDashboard: React.FC<Props> = ({
           {/* List of Resumes submitted against selected JD */}
           {isLoading && jobs.length === 0 ? (
             <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="p-5 bg-white rounded-2xl border border-neutral-200 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <div className="skeleton w-14 h-14 rounded-full shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="skeleton h-4 w-40 rounded" />
-                      <div className="skeleton h-3 w-56 rounded" />
-                    </div>
+              <SkeletonList count={3} className="p-5 bg-white rounded-2xl border border-neutral-200 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-14 h-14 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-56" />
                   </div>
-                  <div className="skeleton h-3 w-full rounded" />
                 </div>
-              ))}
+                <Skeleton className="h-3 w-full" />
+              </SkeletonList>
             </div>
           ) : filteredApplications.length === 0 ? (
-            <div className="p-12 bg-white rounded-2xl border border-neutral-200 text-center space-y-3 animate-fade-in">
-              <div className="w-12 h-12 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400">
-                <Inbox className="w-6 h-6" />
-              </div>
-              <h3 className="font-semibold text-neutral-900 text-sm">
-                {jobApplications.length > 0
+            <EmptyState
+              icon={Inbox}
+              title={
+                jobApplications.length > 0
                   ? 'No matching applicants'
                   : selectedJob?.status === 'closed'
                   ? 'Closed with no applications'
-                  : 'No applications yet'}
-              </h3>
-              <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                {jobApplications.length > 0
+                  : 'No applications yet'
+              }
+              description={
+                jobApplications.length > 0
                   ? 'No applicants match the current search or filter. Try adjusting them.'
                   : selectedJob?.status === 'closed'
                   ? 'This role is closed, so it is hidden from the candidate portal and cannot receive new applications. Reopen it to start collecting resumes.'
-                  : 'Applications submitted for this role will appear here once candidates start applying.'}
-              </p>
-              {jobApplications.length === 0 && selectedJob?.status === 'closed' && (
-                <button
-                  onClick={() => onUpdateJobStatus(selectedJob.id, 'open')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-medium hover:bg-emerald-100 transition-colors"
-                >
-                  <Unlock className="w-3.5 h-3.5" />
-                  Reopen Position
-                </button>
-              )}
-            </div>
+                  : 'Applications submitted for this role will appear here once candidates start applying.'
+              }
+              action={
+                jobApplications.length === 0 && selectedJob?.status === 'closed' ? (
+                  <button
+                    onClick={() => onUpdateJobStatus(selectedJob.id, 'open')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-medium hover:bg-emerald-100 transition-colors"
+                  >
+                    <Unlock className="w-3.5 h-3.5" />
+                    Reopen Position
+                  </button>
+                ) : undefined
+              }
+            />
           ) : (
             <div key={`${selectedJob?.id}-${verdictFilter}-${sortOrder}-${debouncedSearch}`} className="space-y-3">
               {filteredApplications.map((app, index) => (

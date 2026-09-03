@@ -3,6 +3,7 @@ import { X, Briefcase, Sparkles, Loader2 } from 'lucide-react';
 import { createJobAdmin } from '../services/apiClient';
 import { FormField } from './FormField';
 import { Modal } from './Modal';
+import { SAMPLE_JOB_DESCRIPTIONS, type SampleJobDescription } from '../data/sampleJobDescriptions';
 import { useToast } from './ToastProvider';
 
 interface Props {
@@ -52,43 +53,13 @@ export const NewJobModal: React.FC<Props> = ({ isOpen, onClose, onJobPosted }) =
     if (handleRequestClose()) onClose();
   };
 
-  const handleLoadSample = (sampleType: 'growth' | 'product') => {
-    if (sampleType === 'growth') {
-      setTitle('Growth & Performance Marketing Manager');
-      setCompany('Aura Living');
-      setDepartment('Growth Marketing');
-      setLocation('Delhi NCR, India');
-      setDescription(`About Aura Living:
-Aura Living is a direct-to-consumer home wellness and ergonomics brand revolutionizing how modern professionals live and work.
-
-Key Responsibilities:
-• Own paid user acquisition across Meta, Google Ads, and emerging channels with an 8-figure annual budget.
-• Build continuous multivariate A/B testing loops for landing pages, ad copy, and creative assets.
-• Drive customer acquisition cost (CAC) optimization and ROAS tracking across blended attribution models.
-• Partner with product and engineering to optimize customer checkout funnel and conversion rate.
-
-Requirements:
-• 3–5 years scaling performance marketing at a fast-growing D2C brand or high-growth consumer tech startup.
-• Deep analytical rigor: cohort analyses, CAC-to-LTV ratios, and analytics tooling (GA4, Mixpanel).
-• Strong creative intuition paired with experimental discipline.`);
-    } else {
-      setTitle('Senior Product Manager (Core Experience)');
-      setCompany('OmniFlow');
-      setDepartment('Product Management');
-      setLocation('Bengaluru / Remote');
-      setDescription(`About OmniFlow:
-OmniFlow provides enterprise collaboration infrastructure for globally distributed teams.
-
-Key Responsibilities:
-• Lead product discovery, roadmapping, and feature execution for the core collaboration suite.
-• Work with engineering, UX research, and design leaders to deliver enterprise-grade workflows.
-• Measure usage analytics, adoption velocity, and Net Promoter Scores.
-
-Requirements:
-• 4+ years of product management experience in B2B SaaS.
-• Proven track record shipping complex, highly scalable web applications.
-• Strong technical background with API architectures and system design.`);
-    }
+  // Sample JDs are prose, so they live in JSON rather than inline here.
+  const handleLoadSample = (sample: SampleJobDescription) => {
+    setTitle(sample.title);
+    setCompany(sample.company);
+    setDepartment(sample.department);
+    setLocation(sample.location);
+    setDescription(sample.description);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,20 +136,16 @@ Requirements:
               Quick Fill Sample JDs:
             </span>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => handleLoadSample('growth')}
-                className="px-2.5 py-1 bg-white hover:bg-neutral-100 border border-neutral-200 rounded-md font-medium text-neutral-800 transition-colors"
-              >
-                + Growth Manager
-              </button>
-              <button
-                type="button"
-                onClick={() => handleLoadSample('product')}
-                className="px-2.5 py-1 bg-white hover:bg-neutral-100 border border-neutral-200 rounded-md font-medium text-neutral-800 transition-colors"
-              >
-                + Product Manager
-              </button>
+              {SAMPLE_JOB_DESCRIPTIONS.map((sample) => (
+                <button
+                  key={sample.key}
+                  type="button"
+                  onClick={() => handleLoadSample(sample)}
+                  className="px-2.5 py-1 bg-white hover:bg-neutral-100 border border-neutral-200 rounded-md font-medium text-neutral-800 transition-colors"
+                >
+                  {sample.label}
+                </button>
+              ))}
             </div>
           </div>
 
