@@ -187,11 +187,14 @@ Return ONLY a valid JSON object with the following structure:
   const parsedData = JSON.parse(responseText);
 
   const matchScore = typeof parsedData.matchScore === 'number' ? Math.min(Math.max(parsedData.matchScore, 0), 100) : 75;
-  let verdict: MatchVerdict = parsedData.verdict;
-  const validVerdicts: MatchVerdict[] = ['Strong Match', 'Potential Match', 'Moderate Match', 'Low Match'];
-  if (!validVerdicts.includes(verdict)) {
-    verdict = verdictForScore(matchScore);
-  }
+  // Always derive the verdict from the score via our own SCORE_THRESHOLDS,
+  // never trust the LLM's self-reported verdict string directly -- the
+  // prompt's own score bands (90/75/60) don't match SCORE_THRESHOLDS
+  // (85/70/55), so a valid-looking verdict from Groq could still disagree
+  // with the score it's attached to (e.g. an 88 labeled "Potential Match"),
+  // which broke the admin dashboard's "Strong Match (85+)" filter and
+  // score-badge colors that key off matchScore, not the verdict text.
+  const verdict: MatchVerdict = verdictForScore(matchScore);
 
   return {
     matchScore,
