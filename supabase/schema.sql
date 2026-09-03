@@ -8,6 +8,7 @@ create table if not exists jobs (
   department text,
   location text,
   description text not null,
+  status text not null default 'open' check (status in ('open', 'closed')),
   created_at timestamptz not null default now()
 );
 

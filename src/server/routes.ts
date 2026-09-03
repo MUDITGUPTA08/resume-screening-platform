@@ -3,10 +3,12 @@ import {
   listJobs,
   createJob,
   getJobById,
+  updateJobStatus,
   listApplications,
   createApplication,
   updateApplicationStatus,
   type JobRecord,
+  type JobStatus,
 } from './dataStore.js';
 
 export class ApiError extends Error {
@@ -50,14 +52,16 @@ function serializeJob(job: JobRecord) {
     department: job.department,
     location: job.location,
     description: job.description,
+    status: job.status,
     createdAt: job.createdAt,
   };
 }
 
 // ---- Public routes ----
 
+// Candidates only ever see open positions.
 export async function handleListJobs() {
-  const jobs = await listJobs();
+  const jobs = await listJobs({ openOnly: true });
   return jobs.map(serializeJob);
 }
 
@@ -104,6 +108,9 @@ export async function handleApply(body: any) {
   if (!job) {
     throw new ApiError(404, 'This job opening no longer exists.');
   }
+  if (job.status !== 'open') {
+    throw new ApiError(409, 'This job opening is no longer accepting applications.');
+  }
 
   const analysis = await screenCandidateSafe({
     jobTitle: job.title,
@@ -129,12 +136,27 @@ export async function handleApply(body: any) {
 
 // ---- Admin routes ----
 
+// Admin sees every job regardless of status (open and closed).
+export async function handleAdminListJobs() {
+  const jobs = await listJobs();
+  return jobs.map(serializeJob);
+}
+
 export async function handleAdminCreateJob(body: any) {
   const { title, company, department, location, description } = body ?? {};
   if (!title || !company || !description || description.length < 50) {
     throw new ApiError(400, 'Title, company, and a substantive description are required.');
   }
   const job = await createJob({ title, company, department, location, description });
+  return serializeJob(job);
+}
+
+export async function handleAdminUpdateJobStatus(jobId: string, status: string) {
+  const validStatuses: JobStatus[] = ['open', 'closed'];
+  if (!validStatuses.includes(status as JobStatus)) {
+    throw new ApiError(400, 'Invalid status value.');
+  }
+  const job = await updateJobStatus(jobId, status as JobStatus);
   return serializeJob(job);
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { JobOpening, JobApplication, SCORE_THRESHOLDS } from '../types';
+import { JobOpening, JobApplication, MatchVerdict, SCORE_THRESHOLDS } from '../types';
 import { ApplicantCard } from './ApplicantCard';
 import {
   Briefcase,
@@ -12,7 +12,9 @@ import {
   Users,
   Target,
   TrendingUp,
-  ArrowUpDown
+  ArrowUpDown,
+  Lock,
+  Unlock
 } from 'lucide-react';
 
 interface Props {
@@ -20,13 +22,25 @@ interface Props {
   applications: JobApplication[];
   onOpenNewJobModal: () => void;
   onUpdateApplicationStatus: (appId: string, status: JobApplication['status']) => void;
+  onUpdateJobStatus: (jobId: string, status: JobOpening['status']) => void;
 }
+
+// Exact filter-value -> verdict mapping, checked by equality rather than
+// substring containment -- avoids relying on each verdict string happening
+// not to collide with another filter's keyword.
+const VERDICT_FILTER_MAP: Record<string, MatchVerdict> = {
+  strong: 'Strong Match',
+  potential: 'Potential Match',
+  moderate: 'Moderate Match',
+  low: 'Low Match',
+};
 
 export const AdminDashboard: React.FC<Props> = ({
   jobs,
   applications,
   onOpenNewJobModal,
   onUpdateApplicationStatus,
+  onUpdateJobStatus,
 }) => {
   const [selectedJobId, setSelectedJobId] = useState<string>(jobs[0]?.id || '');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -52,7 +66,7 @@ export const AdminDashboard: React.FC<Props> = ({
         app.analysis.fitSummary.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesVerdict =
-        verdictFilter === 'all' || app.analysis.verdict.toLowerCase().includes(verdictFilter.toLowerCase());
+        verdictFilter === 'all' || app.analysis.verdict === VERDICT_FILTER_MAP[verdictFilter];
 
       return matchesSearch && matchesVerdict;
     })
@@ -72,6 +86,7 @@ export const AdminDashboard: React.FC<Props> = ({
     });
 
   // Calculate statistics
+  const openJobsCount = jobs.filter((j) => j.status === 'open').length;
   const totalScreened = applications.length;
   const strongMatches = applications.filter((a) => a.analysis.matchScore >= SCORE_THRESHOLDS.strong).length;
   const avgScore = totalScreened > 0
@@ -126,7 +141,7 @@ export const AdminDashboard: React.FC<Props> = ({
             </span>
             <p className="text-xs text-neutral-500 truncate">Open Roles</p>
           </div>
-          <p className="text-2xl font-bold text-neutral-900 mt-2">{jobs.length}</p>
+          <p className="text-2xl font-bold text-neutral-900 mt-2">{openJobsCount}</p>
         </div>
         <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs">
           <div className="flex items-center gap-2">
@@ -164,7 +179,7 @@ export const AdminDashboard: React.FC<Props> = ({
         <div className="lg:col-span-4 space-y-3">
           <div className="flex items-center justify-between px-1">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-              Open Positions ({jobs.length})
+              Job Openings ({jobs.length})
             </h2>
             <span className="text-[11px] text-neutral-400">Select a role</span>
           </div>
@@ -191,6 +206,7 @@ export const AdminDashboard: React.FC<Props> = ({
           <div className="space-y-2.5">
             {jobs.map((job) => {
               const isSelected = job.id === selectedJob?.id;
+              const isClosed = job.status === 'closed';
               const count = applications.filter((a) => a.jobId === job.id).length;
               return (
                 <div
@@ -200,23 +216,34 @@ export const AdminDashboard: React.FC<Props> = ({
                   className={`p-4 rounded-xl cursor-pointer border transition-all text-left ${
                     isSelected
                       ? 'border-neutral-900 bg-neutral-900 text-white shadow-md'
+                      : isClosed
+                      ? 'border-neutral-200 bg-neutral-50 text-neutral-500'
                       : 'border-neutral-200 bg-white hover:border-neutral-300 text-neutral-800'
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className={`text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'text-neutral-300' : 'text-neutral-500'}`}>
-                        {job.company}
-                      </span>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'text-neutral-300' : isClosed ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                          {job.company}
+                        </span>
+                        {isClosed && (
+                          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
+                            isSelected ? 'bg-neutral-700 text-neutral-300' : 'bg-neutral-200 text-neutral-500'
+                          }`}>
+                            Closed
+                          </span>
+                        )}
+                      </div>
                       <h3 className="font-semibold text-sm leading-snug mt-0.5">
                         {job.title}
                       </h3>
                     </div>
-                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                      isSelected 
-                        ? 'bg-neutral-800 text-neutral-100 border border-neutral-700' 
-                        : count > 0 
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
+                      isSelected
+                        ? 'bg-neutral-800 text-neutral-100 border border-neutral-700'
+                        : count > 0
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
                         : 'bg-neutral-100 text-neutral-500'
                     }`}>
                       {count} {count === 1 ? 'Resume' : 'Resumes'}
@@ -232,6 +259,26 @@ export const AdminDashboard: React.FC<Props> = ({
                       Posted {new Date(job.createdAt).toLocaleDateString()}
                     </span>
                   </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUpdateJobStatus(job.id, isClosed ? 'open' : 'closed');
+                    }}
+                    className={`mt-3 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
+                      isSelected
+                        ? 'bg-neutral-800 text-neutral-200 hover:bg-neutral-700'
+                        : isClosed
+                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {isClosed ? (
+                      <><Unlock className="w-3 h-3" /> Reopen Position</>
+                    ) : (
+                      <><Lock className="w-3 h-3" /> Close Position</>
+                    )}
+                  </button>
                 </div>
               );
             })}
@@ -252,6 +299,11 @@ export const AdminDashboard: React.FC<Props> = ({
                     </span>
                     <span className="text-xs text-neutral-300">•</span>
                     <span className="text-xs text-neutral-500">{selectedJob.department}</span>
+                    {selectedJob.status === 'closed' && (
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600">
+                        Closed
+                      </span>
+                    )}
                   </div>
                   <h2 className="text-lg font-bold text-neutral-900 tracking-tight">
                     {selectedJob.title}
@@ -259,6 +311,20 @@ export const AdminDashboard: React.FC<Props> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onUpdateJobStatus(selectedJob.id, selectedJob.status === 'closed' ? 'open' : 'closed')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                      selectedJob.status === 'closed'
+                        ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {selectedJob.status === 'closed' ? (
+                      <><Unlock className="w-3.5 h-3.5" /> <span>Reopen</span></>
+                    ) : (
+                      <><Lock className="w-3.5 h-3.5" /> <span>Close</span></>
+                    )}
+                  </button>
                   <button
                     id="btn-toggle-view-jd"
                     onClick={() => setIsViewingFullJD(!isViewingFullJD)}
@@ -306,7 +372,8 @@ export const AdminDashboard: React.FC<Props> = ({
                       <option value="all">All Scores</option>
                       <option value="strong">Strong Match (85+)</option>
                       <option value="potential">Potential (70-84)</option>
-                      <option value="moderate">Moderate (&lt;70)</option>
+                      <option value="moderate">Moderate (55-69)</option>
+                      <option value="low">Low Match (&lt;55)</option>
                     </select>
 
                     {/* Sort order */}

@@ -1,4 +1,4 @@
-import { JobOpening, JobApplication, CandidateDetails } from '../types';
+import { JobOpening, JobApplication, JobStatus, CandidateDetails } from '../types';
 
 const ADMIN_PASSCODE_KEY = 'resume_screener_admin_passcode_v1';
 
@@ -82,6 +82,14 @@ export async function createJobAdmin(job: {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(job),
+  });
+}
+
+export async function updateJobStatusAdmin(jobId: string, status: JobStatus): Promise<JobOpening> {
+  return adminFetch('/api/admin/jobs', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jobId, status }),
   });
 }
 

@@ -12,6 +12,7 @@ import {
   fetchAdminApplications,
   verifyAdminPasscode,
   updateApplicationStatusAdmin,
+  updateJobStatusAdmin,
   getStoredAdminPasscode,
   setStoredAdminPasscode,
   clearStoredAdminPasscode,
@@ -114,6 +115,15 @@ export default function App() {
     }
   };
 
+  const handleUpdateJobStatus = async (jobId: string, status: JobOpening['status']) => {
+    try {
+      await updateJobStatusAdmin(jobId, status);
+      setJobs((prev) => prev.map((job) => (job.id === jobId ? { ...job, status } : job)));
+    } catch (e) {
+      console.error('Failed to update job status', e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-100/60 text-neutral-900 flex flex-col font-sans selection:bg-neutral-900 selection:text-white">
       {/* Global Navigation Header */}
@@ -147,6 +157,7 @@ export default function App() {
             applications={applications}
             onOpenNewJobModal={() => setIsNewJobModalOpen(true)}
             onUpdateApplicationStatus={handleUpdateApplicationStatus}
+            onUpdateJobStatus={handleUpdateJobStatus}
           />
         )}
       </main>

@@ -2,6 +2,8 @@ import { getSupabaseClient } from './supabase.js';
 import type { ScreeningResult } from './screening.js';
 import type { CandidateDetails, JobApplication } from '../types.js';
 
+export type JobStatus = 'open' | 'closed';
+
 export interface JobRecord {
   id: string;
   title: string;
@@ -9,6 +11,7 @@ export interface JobRecord {
   department: string | null;
   location: string | null;
   description: string;
+  status: JobStatus;
   createdAt: string;
 }
 
@@ -32,6 +35,7 @@ function mapJobRow(row: any): JobRecord {
     department: row.department,
     location: row.location,
     description: row.description,
+    status: row.status ?? 'open',
     createdAt: row.created_at,
   };
 }
@@ -66,15 +70,29 @@ function mapApplicationRow(row: any): ApplicationRecord {
   };
 }
 
-export async function listJobs(): Promise<JobRecord[]> {
+export async function listJobs(options?: { openOnly?: boolean }): Promise<JobRecord[]> {
   const supabase = getSupabaseClient();
-  const { data, error } = await supabase
-    .from('jobs')
-    .select('*')
-    .order('created_at', { ascending: false });
+  let query = supabase.from('jobs').select('*').order('created_at', { ascending: false });
+  if (options?.openOnly) {
+    query = query.eq('status', 'open');
+  }
+  const { data, error } = await query;
 
   if (error) throw new Error(`Failed to list jobs: ${error.message}`);
   return (data ?? []).map(mapJobRow);
+}
+
+export async function updateJobStatus(jobId: string, status: JobStatus): Promise<JobRecord> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from('jobs')
+    .update({ status })
+    .eq('id', jobId)
+    .select()
+    .single();
+
+  if (error) throw new Error(`Failed to update job status: ${error.message}`);
+  return mapJobRow(data);
 }
 
 export async function createJob(input: {

@@ -5,7 +5,9 @@ import dotenv from 'dotenv';
 import {
   handleListJobs,
   handleApply,
+  handleAdminListJobs,
   handleAdminCreateJob,
+  handleAdminUpdateJobStatus,
   handleAdminListApplications,
   handleAdminUpdateApplicationStatus,
   sendApiError,
@@ -72,7 +74,7 @@ app.all('/api/apply', (req, res) => {
 
 app.get('/api/admin/jobs', requireAdmin, async (req, res) => {
   try {
-    res.json(await handleListJobs());
+    res.json(await handleAdminListJobs());
   } catch (err) {
     sendApiError(res, err);
   }
@@ -81,6 +83,19 @@ app.get('/api/admin/jobs', requireAdmin, async (req, res) => {
 app.post('/api/admin/jobs', requireAdmin, async (req, res) => {
   try {
     res.status(201).json(await handleAdminCreateJob(req.body));
+  } catch (err) {
+    sendApiError(res, err);
+  }
+});
+
+app.patch('/api/admin/jobs', requireAdmin, async (req, res) => {
+  try {
+    const { jobId, status } = req.body ?? {};
+    if (!jobId) {
+      res.status(400).json({ error: 'jobId is required.' });
+      return;
+    }
+    res.json(await handleAdminUpdateJobStatus(jobId, status));
   } catch (err) {
     sendApiError(res, err);
   }

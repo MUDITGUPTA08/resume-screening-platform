@@ -1,3 +1,5 @@
+export type JobStatus = 'open' | 'closed';
+
 export interface JobOpening {
   id: string;
   title: string;
@@ -5,6 +7,7 @@ export interface JobOpening {
   description: string;
   location?: string;
   department?: string;
+  status: JobStatus;
   createdAt: string;
 }
 

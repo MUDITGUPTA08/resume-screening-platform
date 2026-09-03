@@ -7,6 +7,7 @@ export const INITIAL_JOB_OPENINGS: JobOpening[] = [
     company: 'Satva Partners',
     department: 'Strategy & Operations',
     location: 'Bengaluru, India (Hybrid)',
+    status: 'open',
     createdAt: '2026-08-20T09:00:00Z',
     description: `About Satva Partners:
 Satva Partners is an early-stage venture investment firm and strategic growth partner working with high-potential tech-enabled businesses across South and Southeast Asia. We partner deeply with founders to accelerate 0-to-1 and 1-to-10 scale.
@@ -34,6 +35,7 @@ What We Look For:
     company: 'House of Ved',
     department: 'Marketing & Brand Community',
     location: 'Mumbai, India (In-Office / Flexible)',
+    status: 'open',
     createdAt: '2026-08-22T10:30:00Z',
     description: `About House of Ved:
 House of Ved is a fast-growing contemporary wellness and consumer brand blending ancient botanical science with clean, modern rituals. We create elevated everyday wellness experiences for conscious urban consumers.
