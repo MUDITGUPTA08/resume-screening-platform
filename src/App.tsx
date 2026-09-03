@@ -33,17 +33,23 @@ export default function App() {
   const [isNewJobModalOpen, setIsNewJobModalOpen] = useState<boolean>(false);
   const [isWriteupOpen, setIsWriteupOpen] = useState<boolean>(false);
 
-  const loadPublicJobs = useCallback(async () => {
+  const loadPublicJobs = useCallback(async (options?: { silent?: boolean }) => {
     try {
-      setIsLoadingJobs(true);
+      if (!options?.silent) {
+        setIsLoadingJobs(true);
+      }
       setLoadError('');
       const data = await fetchOpenJobs();
       setJobs(data);
     } catch (e) {
       console.error('Failed to load job openings', e);
-      setLoadError('Could not load job openings. Please refresh the page.');
+      if (!options?.silent) {
+        setLoadError('Could not load job openings. Please refresh the page.');
+      }
     } finally {
-      setIsLoadingJobs(false);
+      if (!options?.silent) {
+        setIsLoadingJobs(false);
+      }
     }
   }, []);
 
@@ -60,9 +66,12 @@ export default function App() {
     }
   }, []);
 
+  const hasLoadedJobsOnce = React.useRef(false);
+
   useEffect(() => {
     if (activeTab === 'candidate') {
-      loadPublicJobs();
+      loadPublicJobs({ silent: hasLoadedJobsOnce.current });
+      hasLoadedJobsOnce.current = true;
     }
   }, [activeTab, loadPublicJobs]);
 
