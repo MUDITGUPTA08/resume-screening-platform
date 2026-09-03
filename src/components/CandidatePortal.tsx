@@ -244,9 +244,9 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
         /* Confirmed submission screen strictly adheres to candidate brief */
         <div
           id="candidate-confirmation-card"
-          className="max-w-xl mx-auto my-12 p-8 sm:p-10 bg-white rounded-2xl border border-neutral-200 shadow-sm text-center"
+          className="max-w-xl mx-auto my-12 p-8 sm:p-10 bg-white rounded-2xl border border-neutral-200 shadow-sm text-center animate-scale-in"
         >
-          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center animate-pop">
             <PartyPopper className="w-8 h-8" />
           </div>
 
@@ -276,7 +276,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
         /* Processing state — submission touches extraction, LLM screening, and
            persistence server-side, which can take a few seconds; make that visible
            rather than leaving the candidate wondering if the click registered. */
-        <div className="max-w-xl mx-auto my-12 p-8 sm:p-10 bg-white rounded-2xl border border-neutral-200 shadow-sm text-center">
+        <div className="max-w-xl mx-auto my-12 p-8 sm:p-10 bg-white rounded-2xl border border-neutral-200 shadow-sm text-center animate-scale-in">
           <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-neutral-100 text-neutral-700 flex items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin" />
           </div>
@@ -307,27 +307,44 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
             {/* List of open jobs */}
             <div className="space-y-3">
               {isLoading && jobs.length === 0 && (
-                <div className="p-6 text-center text-sm text-neutral-500 bg-white rounded-xl border border-neutral-200">
-                  Loading open positions…
-                </div>
+                <>
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="p-4 rounded-xl border-2 border-neutral-200 bg-white space-y-3"
+                      style={{ animationDelay: `${i * 80}ms` }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="skeleton h-3 w-20 rounded" />
+                        <div className="skeleton h-3.5 w-12 rounded-full" />
+                      </div>
+                      <div className="skeleton h-4 w-3/4 rounded" />
+                      <div className="flex items-center gap-3">
+                        <div className="skeleton h-3 w-24 rounded" />
+                        <div className="skeleton h-3 w-20 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
               {!isLoading && jobs.length === 0 && (
-                <div className="p-6 text-center text-sm text-neutral-500 bg-white rounded-xl border border-neutral-200">
+                <div className="p-6 text-center text-sm text-neutral-500 bg-white rounded-xl border border-neutral-200 animate-fade-in">
                   No open positions right now. Check back soon.
                 </div>
               )}
-              {jobs.map((job) => {
+              {jobs.map((job, index) => {
                 const isSelected = job.id === selectedJobId;
                 return (
                   <div
                     key={job.id}
                     id={`job-card-${job.id}`}
                     onClick={() => handleSelectJob(job.id)}
-                    className={`p-4 rounded-xl cursor-pointer border-2 transition-all ${
+                    className={`stagger-item p-4 rounded-xl cursor-pointer border-2 transition-all duration-200 ${
                       isSelected
                         ? 'border-neutral-900 bg-neutral-900 text-white shadow-md'
-                        : 'border-neutral-200 bg-white hover:border-neutral-300 text-neutral-800'
+                        : 'border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm hover:-translate-y-0.5 text-neutral-800'
                     }`}
+                    style={{ animationDelay: `${Math.min(index, 6) * 60}ms` }}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -371,7 +388,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
 
             {/* Selected Job Description Preview */}
             {selectedJob && (
-              <div className="p-5 bg-white rounded-xl border border-neutral-200 shadow-xs space-y-3">
+              <div key={selectedJob.id} className="p-5 bg-white rounded-xl border border-neutral-200 shadow-xs space-y-3 animate-fade-in">
                 <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                   <div className="flex items-center gap-2">
                     <Building2 className="w-4 h-4 text-neutral-600" />
@@ -381,7 +398,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
                   </div>
                 </div>
 
-                <div className="text-xs text-neutral-600 leading-relaxed whitespace-pre-line">
+                <div key={isJdExpanded ? 'expanded' : 'collapsed'} className="text-xs text-neutral-600 leading-relaxed whitespace-pre-line animate-fade-in">
                   {isJdExpanded || selectedJob.description.length <= JD_PREVIEW_LENGTH
                     ? selectedJob.description
                     : `${selectedJob.description.slice(0, JD_PREVIEW_LENGTH).trimEnd()}…`}

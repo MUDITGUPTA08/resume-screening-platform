@@ -135,48 +135,62 @@ export const AdminDashboard: React.FC<Props> = ({
       </div>
 
       {/* Aggregate Metrics Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-neutral-100 text-neutral-600 shrink-0">
-              <Briefcase className="w-3.5 h-3.5" />
-            </span>
-            <p className="text-xs text-neutral-500 truncate">Open Roles</p>
-          </div>
-          <p className="text-2xl font-bold text-neutral-900 mt-2">{openJobsCount}</p>
+      {isLoading && jobs.length === 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="skeleton w-6 h-6 rounded-lg" />
+                <div className="skeleton h-3 w-16 rounded" />
+              </div>
+              <div className="skeleton h-6 w-10 rounded" />
+            </div>
+          ))}
         </div>
-        <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-neutral-100 text-neutral-600 shrink-0">
-              <Users className="w-3.5 h-3.5" />
-            </span>
-            <p className="text-xs text-neutral-500 truncate">Applications</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs transition-all">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-neutral-100 text-neutral-600 shrink-0">
+                <Briefcase className="w-3.5 h-3.5" />
+              </span>
+              <p className="text-xs text-neutral-500 truncate">Open Roles</p>
+            </div>
+            <p key={openJobsCount} className="text-2xl font-bold text-neutral-900 mt-2 animate-fade-in">{openJobsCount}</p>
           </div>
-          <p className="text-2xl font-bold text-neutral-900 mt-2">{totalScreened}</p>
-        </div>
-        <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
-              <Target className="w-3.5 h-3.5" />
-            </span>
-            <p className="text-xs text-neutral-500 truncate">Strong Match</p>
+          <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-neutral-100 text-neutral-600 shrink-0">
+                <Users className="w-3.5 h-3.5" />
+              </span>
+              <p className="text-xs text-neutral-500 truncate">Applications</p>
+            </div>
+            <p key={totalScreened} className="text-2xl font-bold text-neutral-900 mt-2 animate-fade-in">{totalScreened}</p>
           </div>
-          <p className="text-2xl font-bold text-emerald-600 mt-2">{strongMatches}</p>
-        </div>
-        <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 shrink-0">
-              <TrendingUp className="w-3.5 h-3.5" />
-            </span>
-            <p className="text-xs text-neutral-500 truncate">Avg Match</p>
+          <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+                <Target className="w-3.5 h-3.5" />
+              </span>
+              <p className="text-xs text-neutral-500 truncate">Strong Match</p>
+            </div>
+            <p key={strongMatches} className="text-2xl font-bold text-emerald-600 mt-2 animate-fade-in">{strongMatches}</p>
           </div>
-          <p className="text-2xl font-bold text-blue-600 mt-2">{avgScore}%</p>
+          <div className="p-4 bg-white rounded-xl border border-neutral-200 shadow-xs">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 shrink-0">
+                <TrendingUp className="w-3.5 h-3.5" />
+              </span>
+              <p className="text-xs text-neutral-500 truncate">Avg Match</p>
+            </div>
+            <p key={avgScore} className="text-2xl font-bold text-blue-600 mt-2 animate-fade-in">{avgScore}%</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main 2-Column Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* Left Column: All Posted Job Openings (4 cols on lg) */}
         <div className="lg:col-span-4 space-y-3">
           <div className="flex items-center justify-between px-1">
@@ -186,8 +200,29 @@ export const AdminDashboard: React.FC<Props> = ({
             <span className="text-[11px] text-neutral-400">Select a role</span>
           </div>
 
-          {jobs.length === 0 && (
-            <div className="p-10 bg-white rounded-2xl border border-neutral-200 text-center space-y-3">
+          {isLoading && jobs.length === 0 && (
+            <div className="space-y-2.5">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="p-4 rounded-xl border border-neutral-200 bg-white space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1.5">
+                      <div className="skeleton h-2.5 w-16 rounded" />
+                      <div className="skeleton h-4 w-32 rounded" />
+                    </div>
+                    <div className="skeleton h-4 w-14 rounded-full" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="skeleton h-3 w-20 rounded" />
+                    <div className="skeleton h-3 w-16 rounded" />
+                  </div>
+                  <div className="skeleton h-7 w-full rounded-lg" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isLoading && jobs.length === 0 && (
+            <div className="p-10 bg-white rounded-2xl border border-neutral-200 text-center space-y-3 animate-fade-in">
               <div className="w-12 h-12 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400">
                 <Briefcase className="w-6 h-6" />
               </div>
@@ -206,7 +241,7 @@ export const AdminDashboard: React.FC<Props> = ({
           )}
 
           <div className="space-y-2.5">
-            {jobs.map((job) => {
+            {jobs.map((job, index) => {
               const isSelected = job.id === selectedJob?.id;
               const isClosed = job.status === 'closed';
               const count = applications.filter((a) => a.jobId === job.id).length;
@@ -215,22 +250,23 @@ export const AdminDashboard: React.FC<Props> = ({
                   key={job.id}
                   id={`admin-jd-card-${job.id}`}
                   onClick={() => setSelectedJobId(job.id)}
-                  className={`p-4 rounded-xl cursor-pointer border transition-all text-left ${
+                  className={`stagger-item p-4 rounded-xl cursor-pointer border transition-all duration-300 text-left ${
                     isSelected
                       ? 'border-neutral-900 bg-neutral-900 text-white shadow-md'
                       : isClosed
                       ? 'border-neutral-200 bg-neutral-50 text-neutral-500'
-                      : 'border-neutral-200 bg-white hover:border-neutral-300 text-neutral-800'
+                      : 'border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-sm hover:-translate-y-0.5 text-neutral-800'
                   }`}
+                  style={{ animationDelay: `${Math.min(index, 6) * 60}ms` }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className={`text-[10px] font-semibold uppercase tracking-wider ${isSelected ? 'text-neutral-300' : isClosed ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider transition-colors duration-300 ${isSelected ? 'text-neutral-300' : isClosed ? 'text-neutral-400' : 'text-neutral-500'}`}>
                           {job.company}
                         </span>
                         {isClosed && (
-                          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
+                          <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full animate-pop ${
                             isSelected ? 'bg-neutral-700 text-neutral-300' : 'bg-neutral-200 text-neutral-500'
                           }`}>
                             Closed
@@ -267,7 +303,7 @@ export const AdminDashboard: React.FC<Props> = ({
                       e.stopPropagation();
                       onUpdateJobStatus(job.id, isClosed ? 'open' : 'closed');
                     }}
-                    className={`mt-3 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-colors ${
+                    className={`mt-3 w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-200 active:scale-95 cursor-pointer ${
                       isSelected
                         ? 'bg-neutral-800 text-neutral-200 hover:bg-neutral-700'
                         : isClosed
@@ -275,11 +311,13 @@ export const AdminDashboard: React.FC<Props> = ({
                         : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                     }`}
                   >
-                    {isClosed ? (
-                      <><Unlock className="w-3 h-3" /> Reopen Position</>
-                    ) : (
-                      <><Lock className="w-3 h-3" /> Close Position</>
-                    )}
+                    <span key={isClosed ? 'closed' : 'open'} className="flex items-center gap-1.5 animate-fade-in">
+                      {isClosed ? (
+                        <><Unlock className="w-3 h-3" /> Reopen Position</>
+                      ) : (
+                        <><Lock className="w-3 h-3" /> Close Position</>
+                      )}
+                    </span>
                   </button>
                 </div>
               );
@@ -292,7 +330,7 @@ export const AdminDashboard: React.FC<Props> = ({
           
           {/* Header of Active JD */}
           {selectedJob && (
-            <div className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-xs space-y-3">
+            <div key={selectedJob.id} className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-xs space-y-3 animate-fade-in">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-neutral-100 pb-3">
                 <div>
                   <div className="flex items-center gap-2">
@@ -302,7 +340,7 @@ export const AdminDashboard: React.FC<Props> = ({
                     <span className="text-xs text-neutral-300">•</span>
                     <span className="text-xs text-neutral-500">{selectedJob.department}</span>
                     {selectedJob.status === 'closed' && (
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-neutral-200 text-neutral-600 animate-pop">
                         Closed
                       </span>
                     )}
@@ -315,17 +353,19 @@ export const AdminDashboard: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => onUpdateJobStatus(selectedJob.id, selectedJob.status === 'closed' ? 'open' : 'closed')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 active:scale-95 cursor-pointer ${
                       selectedJob.status === 'closed'
                         ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
                         : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                     }`}
                   >
-                    {selectedJob.status === 'closed' ? (
-                      <><Unlock className="w-3.5 h-3.5" /> <span>Reopen</span></>
-                    ) : (
-                      <><Lock className="w-3.5 h-3.5" /> <span>Close</span></>
-                    )}
+                    <span key={selectedJob.status} className="flex items-center gap-1.5 animate-fade-in">
+                      {selectedJob.status === 'closed' ? (
+                        <><Unlock className="w-3.5 h-3.5" /> <span>Reopen</span></>
+                      ) : (
+                        <><Lock className="w-3.5 h-3.5" /> <span>Close</span></>
+                      )}
+                    </span>
                   </button>
                   <button
                     id="btn-toggle-view-jd"
@@ -399,8 +439,23 @@ export const AdminDashboard: React.FC<Props> = ({
           )}
 
           {/* List of Resumes submitted against selected JD */}
-          {filteredApplications.length === 0 ? (
-            <div className="p-12 bg-white rounded-2xl border border-neutral-200 text-center space-y-3">
+          {isLoading && jobs.length === 0 ? (
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="p-5 bg-white rounded-2xl border border-neutral-200 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="skeleton w-14 h-14 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-4 w-40 rounded" />
+                      <div className="skeleton h-3 w-56 rounded" />
+                    </div>
+                  </div>
+                  <div className="skeleton h-3 w-full rounded" />
+                </div>
+              ))}
+            </div>
+          ) : filteredApplications.length === 0 ? (
+            <div className="p-12 bg-white rounded-2xl border border-neutral-200 text-center space-y-3 animate-fade-in">
               <div className="w-12 h-12 mx-auto rounded-full bg-neutral-100 flex items-center justify-center text-neutral-400">
                 <Inbox className="w-6 h-6" />
               </div>
@@ -414,19 +469,20 @@ export const AdminDashboard: React.FC<Props> = ({
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {filteredApplications.map((app) => (
-                <ApplicantCard
-                  key={app.id}
-                  app={app}
-                  isAnalysisExpanded={expandedAnalysisAppId === app.id}
-                  isResumeExpanded={expandedResumeAppId === app.id}
-                  copiedQuestionId={copiedQuestionId}
-                  onToggleAnalysis={() => setExpandedAnalysisAppId(expandedAnalysisAppId === app.id ? null : app.id)}
-                  onToggleResume={() => setExpandedResumeAppId(expandedResumeAppId === app.id ? null : app.id)}
-                  onCopyQuestion={handleCopyQuestion}
-                  onUpdateStatus={(status) => onUpdateApplicationStatus(app.id, status)}
-                />
+            <div key={`${selectedJob?.id}-${verdictFilter}-${sortOrder}-${searchQuery}`} className="space-y-3">
+              {filteredApplications.map((app, index) => (
+                <div key={app.id} className="stagger-item" style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}>
+                  <ApplicantCard
+                    app={app}
+                    isAnalysisExpanded={expandedAnalysisAppId === app.id}
+                    isResumeExpanded={expandedResumeAppId === app.id}
+                    copiedQuestionId={copiedQuestionId}
+                    onToggleAnalysis={() => setExpandedAnalysisAppId(expandedAnalysisAppId === app.id ? null : app.id)}
+                    onToggleResume={() => setExpandedResumeAppId(expandedResumeAppId === app.id ? null : app.id)}
+                    onCopyQuestion={handleCopyQuestion}
+                    onUpdateStatus={(status) => onUpdateApplicationStatus(app.id, status)}
+                  />
+                </div>
               ))}
             </div>
           )}

@@ -47,7 +47,7 @@ export const ApplicantCard: React.FC<Props> = ({
   return (
     <div
       id={`applicant-card-${app.id}`}
-      className="bg-white rounded-2xl border border-neutral-200 shadow-xs overflow-hidden transition-all hover:border-neutral-300"
+      className="bg-white rounded-2xl border border-neutral-200 shadow-xs overflow-hidden transition-all duration-200 hover:border-neutral-300 hover:shadow-sm"
     >
       {/* Collapsed summary row — always visible */}
       <button
@@ -130,7 +130,7 @@ export const ApplicantCard: React.FC<Props> = ({
 
       {/* Expanded full analysis */}
       {isAnalysisExpanded && (
-        <div className="px-5 pb-6 pt-1 space-y-5 border-t border-neutral-100 bg-neutral-50/40">
+        <div className="px-5 pb-6 pt-1 space-y-5 border-t border-neutral-100 bg-neutral-50/40 animate-slide-up">
 
           {/* Contact Meta */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-500 pt-4">
@@ -274,7 +274,7 @@ export const ApplicantCard: React.FC<Props> = ({
 
           {/* Expanded Raw Resume Text */}
           {isResumeExpanded && (
-            <div className="p-4 bg-neutral-900 text-neutral-200 rounded-xl font-mono text-[11px] leading-relaxed max-h-64 overflow-y-auto whitespace-pre-line border border-neutral-800">
+            <div className="p-4 bg-neutral-900 text-neutral-200 rounded-xl font-mono text-[11px] leading-relaxed max-h-64 overflow-y-auto whitespace-pre-line border border-neutral-800 animate-slide-up">
               <div className="text-neutral-400 text-[10px] uppercase font-sans mb-2 border-b border-neutral-800 pb-1">
                 Extracted Word (.docx) Document Stream
               </div>

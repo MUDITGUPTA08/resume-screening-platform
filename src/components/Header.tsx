@@ -66,13 +66,19 @@ export const Header: React.FC<Props> = ({
           </div>
 
           {/* Persona View Switcher — full width on its own row until desktop width */}
-          <div className="flex items-center bg-neutral-100 p-1 rounded-xl border border-neutral-200 w-full lg:w-auto order-3 lg:order-2">
+          <div className="relative flex items-center bg-neutral-100 p-1 rounded-xl border border-neutral-200 w-full lg:w-auto order-3 lg:order-2">
+            {/* Sliding active-tab indicator */}
+            <div
+              className="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] lg:w-[calc(50%-0.25rem)] bg-white rounded-lg shadow-xs transition-transform duration-300 ease-out"
+              style={{ transform: activeTab === 'admin' ? 'translateX(calc(100% + 0.5rem))' : 'translateX(0)' }}
+            />
+
             <button
               id="tab-candidate-portal"
               onClick={() => onTabChange('candidate')}
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 flex-1 lg:flex-initial px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+              className={`relative z-10 flex items-center justify-center gap-1.5 sm:gap-2 flex-1 lg:flex-initial px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-300 cursor-pointer ${
                 activeTab === 'candidate'
-                  ? 'bg-white text-neutral-900 shadow-xs'
+                  ? 'text-neutral-900'
                   : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
@@ -89,9 +95,9 @@ export const Header: React.FC<Props> = ({
                   onTabChange('admin');
                 }
               }}
-              className={`flex items-center justify-center gap-1.5 sm:gap-2 flex-1 lg:flex-initial px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+              className={`relative z-10 flex items-center justify-center gap-1.5 sm:gap-2 flex-1 lg:flex-initial px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-300 cursor-pointer ${
                 activeTab === 'admin'
-                  ? 'bg-white text-neutral-900 shadow-xs'
+                  ? 'text-neutral-900'
                   : 'text-neutral-600 hover:text-neutral-900'
               }`}
             >
