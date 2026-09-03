@@ -4,6 +4,16 @@ A two-sided hiring platform: candidates browse open positions and apply with a `
 
 See the in-app **Project Write-Up** (header nav) for the full approach, trade-offs, and evaluation notes.
 
+## Architecture
+
+![Architecture diagram: the Candidate Portal and Hiring Dashboard both talk to a server layer that persists to Supabase. The candidate path (public) hits handleApply(), which screens via Groq with a heuristic fallback and returns only a confirmation message. The admin path is gated by a server-side passcode check on every request before any database read.](docs/architecture.svg)
+
+Two request paths converge on one server layer:
+
+- **Candidate path** (public, no auth) — `POST /api/apply` runs `handleApply()`, which validates the submission, screens it via Groq (falling back to a deterministic heuristic scorer if the LLM is unreachable or no key is set), and writes one row to `applications`. The only thing that ever returns to the browser is `{success, message}` — there's no code path where score data leaves the server on this side.
+- **Admin path** (protected) — every `/api/admin/*` request, in both the Vercel functions and the local Express server, passes through `requireAdmin()` first, which checks an `x-admin-passcode` header against `ADMIN_PASSCODE` server-side and returns `401` before any query runs. This is enforced independent of client state — the React app's `isAdminAuthenticated` flag is just a UI convenience, not the security boundary.
+- **Data model** — `applications.job_id` is a real, indexed foreign key into `jobs.id`, so one JD genuinely has many resumes against it, not an array bolted onto the job row.
+
 ## Stack
 
 - React + Vite (frontend)

@@ -1,0 +1,120 @@
+<svg viewBox="0 0 1180 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram: the Candidate Portal sends a POST to /api/apply, which the server screens via Groq LLM with a heuristic fallback and writes to Postgres, returning only a confirmation message. The Hiring Dashboard sends every request through a passcode gate that checks a header against ADMIN_PASSCODE server-side before any database read; the browser never receives score data on the public path. The jobs and applications tables are linked one-to-many by job_id.">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1c1e1b"/>
+    </marker>
+    <marker id="arrowPublic" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#3b6ea5"/>
+    </marker>
+    <marker id="arrowAccent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2f6f4f"/>
+    </marker>
+    <marker id="arrowGate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#a8631f"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="620" fill="#f6f5f2"/>
+
+  <text x="0" y="15" font-family="'IBM Plex Mono', ui-monospace, Consolas, monospace" font-size="11" letter-spacing="0.08em" fill="#3b6ea5" font-weight="600">PUBLIC — NO AUTH</text>
+  <text x="1180" y="15" font-family="'IBM Plex Mono', ui-monospace, Consolas, monospace" font-size="11" letter-spacing="0.08em" fill="#a8631f" font-weight="600" text-anchor="end">PROTECTED — PASSCODE REQUIRED</text>
+
+  <!-- ============ LEFT LANE: CANDIDATE ============ -->
+  <g>
+    <rect x="0" y="34" width="330" height="92" rx="10" fill="#e6eef6" stroke="#3b6ea5" stroke-width="1.2"/>
+    <text x="20" y="60" font-family="'IBM Plex Sans', sans-serif" font-weight="700" font-size="15" fill="#1c1e1b">Candidate Portal</text>
+    <text x="20" y="80" font-family="'IBM Plex Sans', sans-serif" font-size="12" fill="#6b6e68">Select job → fill form →</text>
+    <text x="20" y="97" font-family="'IBM Plex Sans', sans-serif" font-size="12" fill="#6b6e68">upload .docx (parsed client-side</text>
+    <text x="20" y="114" font-family="'IBM Plex Sans', sans-serif" font-size="12" fill="#6b6e68">by mammoth) → submit</text>
+
+    <line x1="165" y1="126" x2="165" y2="180" stroke="#3b6ea5" stroke-width="1.4" marker-end="url(#arrowPublic)"/>
+    <text x="178" y="158" font-family="'IBM Plex Mono', monospace" font-size="11" fill="#3b6ea5">POST /api/apply</text>
+    <text x="178" y="172" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#6b6e68">{ jobId, candidate, resumeText }</text>
+  </g>
+
+  <!-- ============ RIGHT LANE: ADMIN ============ -->
+  <g>
+    <rect x="810" y="34" width="330" height="92" rx="10" fill="#f5ead9" stroke="#a8631f" stroke-width="1.2"/>
+    <text x="830" y="60" font-family="'IBM Plex Sans', sans-serif" font-weight="700" font-size="15" fill="#1c1e1b">Hiring Dashboard</text>
+    <text x="830" y="80" font-family="'IBM Plex Sans', sans-serif" font-size="12" fill="#6b6e68">Post JDs, review applicants,</text>
+    <text x="830" y="97" font-family="'IBM Plex Sans', sans-serif" font-size="12" fill="#6b6e68">see scores + analysis,</text>
+    <text x="830" y="114" font-family="'IBM Plex Sans', sans-serif" font-size="12" fill="#6b6e68">update status</text>
+
+    <line x1="975" y1="126" x2="975" y2="180" stroke="#a8631f" stroke-width="1.4" marker-end="url(#arrowGate)"/>
+    <text x="988" y="158" font-family="'IBM Plex Mono', monospace" font-size="11" fill="#a8631f" text-anchor="start">GET/POST /api/admin/*</text>
+    <text x="988" y="172" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#6b6e68">header: x-admin-passcode</text>
+  </g>
+
+  <!-- ============ GATE ============ -->
+  <g>
+    <rect x="805" y="188" width="335" height="56" rx="9" fill="#ffffff" stroke="#a8631f" stroke-width="1.6"/>
+    <text x="972" y="211" font-family="'IBM Plex Sans', sans-serif" font-weight="600" font-size="12.5" fill="#a8631f" text-anchor="middle">requireAdmin(headers, res)</text>
+    <text x="972" y="230" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#6b6e68" text-anchor="middle">passcode !== ADMIN_PASSCODE → 401, stop</text>
+  </g>
+  <line x1="975" y1="244" x2="975" y2="270" stroke="#a8631f" stroke-width="1.4" marker-end="url(#arrowGate)"/>
+  <text x="988" y="262" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#a8631f">passed ✓</text>
+
+  <!-- ============ SERVER LAYER ============ -->
+  <rect x="120" y="270" width="900" height="130" rx="12" fill="#fbfaf7" stroke="#c7c9c0" stroke-width="1.2"/>
+  <text x="142" y="294" font-family="'IBM Plex Mono', monospace" font-size="11" letter-spacing="0.06em" fill="#9a9d96">SERVER — Vercel functions (api/*) · same handlers via Express in local dev</text>
+
+  <rect x="145" y="308" width="290" height="76" rx="8" fill="#e4efe8" stroke="#2f6f4f" stroke-width="1.2"/>
+  <text x="160" y="330" font-family="'IBM Plex Mono', monospace" font-size="12" font-weight="600" fill="#1c1e1b">handleApply()</text>
+  <text x="160" y="348" font-family="'IBM Plex Sans', sans-serif" font-size="11.5" fill="#6b6e68">validate → screenCandidateSafe()</text>
+  <text x="160" y="364" font-family="'IBM Plex Sans', sans-serif" font-size="11.5" fill="#6b6e68">→ createApplication()</text>
+  <text x="160" y="378" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#2f6f4f">returns {success, message} only</text>
+
+  <rect x="475" y="308" width="230" height="76" rx="8" fill="#ffffff" stroke="#c7c9c0" stroke-width="1.2"/>
+  <text x="490" y="330" font-family="'IBM Plex Mono', monospace" font-size="12" font-weight="600" fill="#1c1e1b">Groq LLM</text>
+  <text x="490" y="347" font-family="'IBM Plex Sans', sans-serif" font-size="11" fill="#6b6e68">gpt-oss-120b → gpt-oss-20b</text>
+  <text x="490" y="363" font-family="'IBM Plex Sans', sans-serif" font-size="11" fill="#6b6e68">unreachable / no key ↓</text>
+  <text x="490" y="378" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#a8631f">fallback: heuristic scorer</text>
+
+  <line x1="435" y1="346" x2="475" y2="346" stroke="#1c1e1b" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+  <rect x="740" y="308" width="255" height="76" rx="8" fill="#f5ead9" stroke="#a8631f" stroke-width="1.2"/>
+  <text x="755" y="330" font-family="'IBM Plex Mono', monospace" font-size="12" font-weight="600" fill="#1c1e1b">handleAdmin*()</text>
+  <text x="755" y="348" font-family="'IBM Plex Sans', sans-serif" font-size="11.5" fill="#6b6e68">createJob · listApplications</text>
+  <text x="755" y="364" font-family="'IBM Plex Sans', sans-serif" font-size="11.5" fill="#6b6e68">updateApplicationStatus</text>
+  <text x="755" y="378" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#a8631f">returns full analysis object</text>
+
+  <line x1="290" y1="384" x2="290" y2="430" stroke="#2f6f4f" stroke-width="1.4" marker-end="url(#arrowAccent)"/>
+  <line x1="865" y1="384" x2="865" y2="430" stroke="#a8631f" stroke-width="1.4" marker-end="url(#arrowGate)"/>
+  <text x="303" y="412" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#2f6f4f">INSERT application</text>
+  <text x="800" y="412" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#a8631f" text-anchor="end">SELECT / UPDATE</text>
+
+  <!-- ============ DATABASE ============ -->
+  <rect x="120" y="432" width="900" height="152" rx="12" fill="#ffffff" stroke="#c7c9c0" stroke-width="1.2"/>
+  <text x="142" y="456" font-family="'IBM Plex Mono', monospace" font-size="11" letter-spacing="0.06em" fill="#9a9d96">SUPABASE — Postgres · RLS on, zero policies → only the service-role key (server-only) can read or write</text>
+
+  <rect x="150" y="472" width="230" height="94" rx="8" fill="#fbfaf7" stroke="#c7c9c0" stroke-width="1.2"/>
+  <text x="165" y="494" font-family="'IBM Plex Mono', monospace" font-size="12.5" font-weight="600" fill="#1c1e1b">jobs</text>
+  <line x1="165" y1="502" x2="365" y2="502" stroke="#ddded7" stroke-width="1"/>
+  <text x="165" y="519" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#2f6f4f">id ⚿ (PK)</text>
+  <text x="165" y="534" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#6b6e68">title, company, description</text>
+  <text x="165" y="549" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#6b6e68">location, department</text>
+
+  <line x1="380" y1="519" x2="470" y2="519" stroke="#1c1e1b" stroke-width="1.4" marker-end="url(#arrow)"/>
+  <text x="425" y="510" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="600" fill="#1c1e1b" text-anchor="middle">1 : N</text>
+  <text x="425" y="536" font-family="'IBM Plex Mono', monospace" font-size="9.5" fill="#6b6e68" text-anchor="middle">job_id FK</text>
+
+  <rect x="480" y="472" width="330" height="94" rx="8" fill="#fbfaf7" stroke="#c7c9c0" stroke-width="1.2"/>
+  <text x="495" y="494" font-family="'IBM Plex Mono', monospace" font-size="12.5" font-weight="600" fill="#1c1e1b">applications</text>
+  <line x1="495" y1="502" x2="795" y2="502" stroke="#ddded7" stroke-width="1"/>
+  <text x="495" y="519" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#2f6f4f">id ⚿ (PK)   job_id ⚷ (FK → jobs.id)</text>
+  <text x="495" y="534" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#6b6e68">candidate fields, resume_parsed_text</text>
+  <text x="495" y="549" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#a8631f">match_score, verdict, strengths, gaps,</text>
+  <text x="495" y="562" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#a8631f">follow_up_questions, status</text>
+
+  <rect x="830" y="472" width="190" height="94" rx="8" fill="#f6f5f2" stroke="#ddded7" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="845" y="494" font-family="'IBM Plex Mono', monospace" font-size="10.5" fill="#9a9d96">applications_job_id_idx</text>
+  <text x="845" y="512" font-family="'IBM Plex Sans', sans-serif" font-size="11" fill="#6b6e68">indexes job_id so "every</text>
+  <text x="845" y="527" font-family="'IBM Plex Sans', sans-serif" font-size="11" fill="#6b6e68">resume for this JD" is a</text>
+  <text x="845" y="542" font-family="'IBM Plex Sans', sans-serif" font-size="11" fill="#6b6e68">real lookup, not a scan</text>
+
+  <path d="M 995 472 C 1042 440, 1042 400, 995 385" fill="none" stroke="#a8631f" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrowGate)"/>
+  <text x="1050" y="411" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#a8631f">rows incl.</text>
+  <text x="1050" y="424" font-family="'IBM Plex Mono', monospace" font-size="10" fill="#a8631f">analysis</text>
+
+  <path d="M 265 472 C 225 440, 225 400, 265 385" fill="none" stroke="#2f6f4f" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arrowAccent)"/>
+</svg>
