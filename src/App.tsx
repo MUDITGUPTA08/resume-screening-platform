@@ -19,9 +19,15 @@ import {
 } from './services/apiClient';
 
 export default function App() {
-  const [jobs, setJobs] = useState<JobOpening[]>([]);
+  // Kept as two separate slices -- the public list is open-only and the
+  // admin list includes closed jobs too, so a single shared `jobs` state
+  // let whichever fetch resolved last (public vs admin) clobber the other
+  // view's data, causing a visible flicker when switching tabs quickly.
+  const [publicJobs, setPublicJobs] = useState<JobOpening[]>([]);
+  const [adminJobs, setAdminJobs] = useState<JobOpening[]>([]);
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState<boolean>(true);
+  const [isLoadingAdminData, setIsLoadingAdminData] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<'candidate' | 'admin'>('candidate');
@@ -40,7 +46,7 @@ export default function App() {
       }
       setLoadError('');
       const data = await fetchOpenJobs();
-      setJobs(data);
+      setPublicJobs(data);
     } catch (e) {
       console.error('Failed to load job openings', e);
       if (!options?.silent) {
@@ -53,20 +59,28 @@ export default function App() {
     }
   }, []);
 
-  const loadAdminData = useCallback(async () => {
+  const loadAdminData = useCallback(async (options?: { silent?: boolean }) => {
     try {
-      const [adminJobs, adminApplications] = await Promise.all([
+      if (!options?.silent) {
+        setIsLoadingAdminData(true);
+      }
+      const [fetchedJobs, fetchedApplications] = await Promise.all([
         fetchAdminJobs(),
         fetchAdminApplications(),
       ]);
-      setJobs(adminJobs);
-      setApplications(adminApplications);
+      setAdminJobs(fetchedJobs);
+      setApplications(fetchedApplications);
     } catch (e) {
       console.error('Failed to load admin data', e);
+    } finally {
+      if (!options?.silent) {
+        setIsLoadingAdminData(false);
+      }
     }
   }, []);
 
   const hasLoadedJobsOnce = React.useRef(false);
+  const hasLoadedAdminDataOnce = React.useRef(false);
 
   useEffect(() => {
     if (activeTab === 'candidate') {
@@ -77,7 +91,8 @@ export default function App() {
 
   useEffect(() => {
     if (activeTab === 'admin' && isAdminAuthenticated) {
-      loadAdminData();
+      loadAdminData({ silent: hasLoadedAdminDataOnce.current });
+      hasLoadedAdminDataOnce.current = true;
     }
   }, [activeTab, isAdminAuthenticated, loadAdminData]);
 
@@ -108,8 +123,8 @@ export default function App() {
   };
 
   const handleJobPosted = () => {
-    loadAdminData();
-    loadPublicJobs();
+    loadAdminData({ silent: true });
+    loadPublicJobs({ silent: true });
   };
 
   const handleApplicationSubmitted = () => {
@@ -129,7 +144,11 @@ export default function App() {
   const handleUpdateJobStatus = async (jobId: string, status: JobOpening['status']) => {
     try {
       await updateJobStatusAdmin(jobId, status);
-      setJobs((prev) => prev.map((job) => (job.id === jobId ? { ...job, status } : job)));
+      setAdminJobs((prev) => prev.map((job) => (job.id === jobId ? { ...job, status } : job)));
+      // Keep the public (open-only) list honest too: a newly-closed job is
+      // removed from it immediately, a reopened one is picked up on the
+      // candidate tab's own next silent refetch rather than guessed here.
+      setPublicJobs((prev) => prev.filter((job) => job.id !== jobId || status === 'open'));
     } catch (e) {
       console.error('Failed to update job status', e);
     }
@@ -146,7 +165,7 @@ export default function App() {
         onAdminLogout={handleAdminLogout}
         onOpenWriteup={() => setIsWriteupOpen(true)}
         applicationCount={applications.length}
-        jobCount={jobs.length}
+        jobCount={publicJobs.length}
       />
 
       {/* Main View Area */}
@@ -158,14 +177,15 @@ export default function App() {
         )}
         {activeTab === 'candidate' ? (
           <CandidatePortal
-            jobs={jobs}
+            jobs={publicJobs}
             isLoading={isLoadingJobs}
             onApplicationSubmitted={handleApplicationSubmitted}
           />
         ) : (
           <AdminDashboard
-            jobs={jobs}
+            jobs={adminJobs}
             applications={applications}
+            isLoading={isLoadingAdminData}
             onOpenNewJobModal={() => setIsNewJobModalOpen(true)}
             onUpdateApplicationStatus={handleUpdateApplicationStatus}
             onUpdateJobStatus={handleUpdateJobStatus}

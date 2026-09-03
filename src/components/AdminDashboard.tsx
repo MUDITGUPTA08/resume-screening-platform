@@ -20,6 +20,7 @@ import {
 interface Props {
   jobs: JobOpening[];
   applications: JobApplication[];
+  isLoading?: boolean;
   onOpenNewJobModal: () => void;
   onUpdateApplicationStatus: (appId: string, status: JobApplication['status']) => void;
   onUpdateJobStatus: (jobId: string, status: JobOpening['status']) => void;
@@ -38,6 +39,7 @@ const VERDICT_FILTER_MAP: Record<string, MatchVerdict> = {
 export const AdminDashboard: React.FC<Props> = ({
   jobs,
   applications,
+  isLoading,
   onOpenNewJobModal,
   onUpdateApplicationStatus,
   onUpdateJobStatus,
