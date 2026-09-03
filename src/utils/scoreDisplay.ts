@@ -26,11 +26,14 @@ const RING_HEX: Record<ScoreTier, string> = {
   low: '#ef4444',
 };
 
+// Matches BADGE_CLASSES/RING_HEX tier for tier -- `low` previously rendered an
+// amber icon inside a red badge and ring, so a low score read as moderate at a
+// glance depending on which element the eye landed on first.
 const ICON_CLASSES: Record<ScoreTier, string> = {
   strong: 'text-emerald-600',
   potential: 'text-blue-600',
   moderate: 'text-amber-600',
-  low: 'text-amber-600',
+  low: 'text-red-600',
 };
 
 export function getScoreBadgeClasses(score: number): string {

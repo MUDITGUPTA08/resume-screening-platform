@@ -7,6 +7,8 @@ import { validateDocxFile, extractTextFromDocx } from '../utils/docxUtils';
 import { submitApplication } from '../services/apiClient';
 import { SAMPLE_CANDIDATE_PRESETS } from '../data/initialData';
 import { FormField } from './FormField';
+import { SelectableCard } from './SelectableCard';
+import { usePersistentState } from '../hooks/usePersistentState';
 import {
   Briefcase,
   Building2,
@@ -33,15 +35,41 @@ interface Props {
   onApplicationSubmitted: () => void;
 }
 
-export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicationSubmitted }) => {
-  const [selectedJobId, setSelectedJobId] = useState<string>(jobs[0]?.id || '');
+// Validation errors are collected into an object, which has no meaningful
+// order -- these fix the visual top-to-bottom order so "first error" means
+// the first one the candidate would actually see.
+const FIELD_FOCUS_ORDER = [
+  'fullName',
+  'email',
+  'phone',
+  'age',
+  'currentLocation',
+  'address',
+  'resume',
+] as const;
 
-  // Jobs load asynchronously from the server; default the selection once they arrive.
+const FIELD_INPUT_IDS: Record<string, string> = {
+  fullName: 'input-candidate-fullname',
+  email: 'input-candidate-email',
+  phone: 'input-candidate-phone',
+  age: 'input-candidate-age',
+  currentLocation: 'input-candidate-location',
+  address: 'input-candidate-address',
+};
+
+export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicationSubmitted }) => {
+  // Persisted so a refresh keeps the candidate on the role they were reading.
+  const [selectedJobId, setSelectedJobId] = usePersistentState<string>('candidate.selectedJobId', '');
+
+  // Jobs load asynchronously from the server; default the selection once they
+  // arrive, and fall back to the first job if the remembered one is gone
+  // (closed since the last visit, or posted by a different environment).
   React.useEffect(() => {
-    if (!selectedJobId && jobs.length > 0) {
+    if (jobs.length === 0) return;
+    if (!selectedJobId || !jobs.some((j) => j.id === selectedJobId)) {
       setSelectedJobId(jobs[0].id);
     }
-  }, [jobs, selectedJobId]);
+  }, [jobs, selectedJobId, setSelectedJobId]);
   const [candidateForm, setCandidateForm] = useState<CandidateDetails>({
     fullName: '',
     email: '',
@@ -59,6 +87,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmittedSuccess, setIsSubmittedSuccess] = useState<boolean>(false);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [isParsingResume, setIsParsingResume] = useState<boolean>(false);
   const [isJdExpanded, setIsJdExpanded] = useState<boolean>(false);
   const [isDemoProfilesOpen, setIsDemoProfilesOpen] = useState<boolean>(false);
 
@@ -90,12 +119,25 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
     }
 
     setDocxFile(file);
-    const result = await extractTextFromDocx(file);
-    if (result.error) {
-      setFileError(result.error);
-      setParsedResumeText('');
-    } else {
-      setParsedResumeText(result.text);
+    // Extraction is async and can take a beat on a large document; without a
+    // visible state the dropzone just sits there looking inert after a drop.
+    setIsParsingResume(true);
+    try {
+      const result = await extractTextFromDocx(file);
+      if (result.error) {
+        setFileError(result.error);
+        setParsedResumeText('');
+      } else {
+        setParsedResumeText(result.text);
+        // A resume arriving clears the stale "resume required" validation error.
+        setFormErrors((prev) => {
+          const next = { ...prev };
+          delete next.resume;
+          return next;
+        });
+      }
+    } finally {
+      setIsParsingResume(false);
     }
   };
 
@@ -172,6 +214,19 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
     }
 
     setFormErrors(errors);
+
+    // Move focus (and the viewport) to the first thing that needs fixing.
+    // Previously a failed submit below the fold looked like a dead button.
+    const firstErrorField = FIELD_FOCUS_ORDER.find((field) => errors[field]);
+    if (firstErrorField) {
+      const target =
+        firstErrorField === 'resume'
+          ? document.getElementById('resume-dropzone')
+          : document.getElementById(FIELD_INPUT_IDS[firstErrorField]);
+      target?.focus({ preventScroll: true });
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     return Object.keys(errors).length === 0;
   };
 
@@ -335,10 +390,12 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
               {jobs.map((job, index) => {
                 const isSelected = job.id === selectedJobId;
                 return (
-                  <div
+                  <SelectableCard
                     key={job.id}
                     id={`job-card-${job.id}`}
-                    onClick={() => handleSelectJob(job.id)}
+                    isSelected={isSelected}
+                    onSelect={() => handleSelectJob(job.id)}
+                    ariaLabel={`${job.title} at ${job.company}${job.location ? `, ${job.location}` : ''}`}
                     className={`stagger-item p-4 rounded-xl cursor-pointer border-2 transition-all duration-200 ${
                       isSelected
                         ? 'border-neutral-900 bg-neutral-900 text-white shadow-md'
@@ -381,7 +438,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
                         </span>
                       )}
                     </div>
-                  </div>
+                  </SelectableCard>
                 );
               })}
             </div>
@@ -585,22 +642,38 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
 
                   {docxFile ? (
                     <div className="flex items-center justify-center gap-3">
-                      <div className="p-2.5 bg-emerald-100 text-emerald-700 rounded-xl shrink-0">
-                        <FileText className="w-6 h-6" />
+                      <div className={`p-2.5 rounded-xl shrink-0 ${
+                        isParsingResume
+                          ? 'bg-neutral-100 text-neutral-600'
+                          : 'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {isParsingResume ? (
+                          <Loader2 className="w-6 h-6 animate-spin" />
+                        ) : (
+                          <FileText className="w-6 h-6" />
+                        )}
                       </div>
                       <div className="text-left min-w-0">
                         <p className="text-sm font-semibold text-neutral-900 truncate">{docxFile.name}</p>
                         <p className="text-xs text-neutral-500">
                           {(docxFile.size / 1024).toFixed(1)} KB • Word Document (.docx)
                         </p>
-                        <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 mt-1 font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Ready to submit
-                        </span>
+                        {isParsingResume ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-neutral-500 mt-1 font-medium">
+                            Reading your document…
+                          </span>
+                        ) : parsedResumeText ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 mt-1 font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Ready to submit
+                          </span>
+                        ) : null}
                       </div>
                       <button
                         type="button"
                         onClick={handleRemoveFile}
-                        className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0"
+                        disabled={isParsingResume}
+                        aria-label="Remove attached resume"
+                        className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors shrink-0 disabled:opacity-40"
                         title="Remove file"
                       >
                         <X className="w-4 h-4" />
@@ -643,7 +716,7 @@ export const CandidatePortal: React.FC<Props> = ({ jobs, isLoading, onApplicatio
                 <button
                   id="btn-submit-application"
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isParsingResume}
                   className="w-full py-3 bg-neutral-900 hover:bg-neutral-800 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs disabled:opacity-60 cursor-pointer"
                 >
                   {isSubmitting ? (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, BookOpen, Cpu, CheckCircle2 } from 'lucide-react';
+import { Modal } from './Modal';
 
 interface Props {
   isOpen: boolean;
@@ -7,14 +8,14 @@ interface Props {
 }
 
 export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div 
-        id="architecture-writeup-modal"
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-neutral-200"
-      >
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      id="architecture-writeup-modal"
+      labelledBy="writeup-title"
+      panelClassName="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl border border-neutral-200"
+    >
         {/* Modal Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white border-b border-neutral-200">
           <div className="flex items-center gap-2">
@@ -22,12 +23,13 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-neutral-900">Project Write-Up</h2>
+              <h2 id="writeup-title" className="text-lg font-semibold text-neutral-900">Project Write-Up</h2>
               <p className="text-xs text-neutral-500">Approach, trade-offs, and evaluation notes for this submission</p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
@@ -132,7 +134,6 @@ export const ArchitectureWriteupModal: React.FC<Props> = ({ isOpen, onClose }) =
             Close Write-up
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 };

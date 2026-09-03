@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { X, Briefcase, Sparkles, Loader2 } from 'lucide-react';
 import { createJobAdmin } from '../services/apiClient';
 import { FormField } from './FormField';
+import { Modal } from './Modal';
+import { useToast } from './ToastProvider';
 
 interface Props {
   isOpen: boolean;
@@ -18,8 +20,37 @@ export const NewJobModal: React.FC<Props> = ({ isOpen, onClose, onJobPosted }) =
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const { showToast } = useToast();
 
-  if (!isOpen) return null;
+  const resetForm = () => {
+    setTitle('');
+    setCompany('');
+    setDepartment('');
+    setLocation('');
+    setDescription('');
+    setErrors({});
+    setSubmitError('');
+  };
+
+  const isDirty = Boolean(
+    title.trim() || company.trim() || department.trim() || location.trim() || description.trim()
+  );
+
+  // Dismissing the dialog used to silently discard a half-written JD, which is
+  // a lot of typing to lose to a stray Escape or backdrop click. Confirm first,
+  // and clear the draft only once the user has actually chosen to abandon it.
+  const handleRequestClose = () => {
+    if (isSubmitting) return false;
+    if (isDirty && !window.confirm('Discard this job opening? Your changes will be lost.')) {
+      return false;
+    }
+    resetForm();
+    return true;
+  };
+
+  const handleCancelClick = () => {
+    if (handleRequestClose()) onClose();
+  };
 
   const handleLoadSample = (sampleType: 'growth' | 'product') => {
     if (sampleType === 'growth') {
@@ -84,20 +115,27 @@ Requirements:
         description: description.trim(),
       });
       onJobPosted();
+      showToast(`"${title.trim()}" is now live and accepting applications.`);
+      resetForm();
       onClose();
     } catch (err: any) {
-      setSubmitError(err?.message || 'Failed to post job opening. Please try again.');
+      const message = err?.message || 'Failed to post job opening. Please try again.';
+      setSubmitError(message);
+      showToast(message, { variant: 'error' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div 
-        id="new-job-modal"
-        className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden max-h-[90vh] flex flex-col"
-      >
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      onRequestClose={handleRequestClose}
+      id="new-job-modal"
+      labelledBy="new-job-title"
+      panelClassName="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden max-h-[90vh] flex flex-col"
+    >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-neutral-50 border-b border-neutral-200 shrink-0">
           <div className="flex items-center gap-2">
@@ -105,12 +143,13 @@ Requirements:
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-semibold text-neutral-900">Post New Job Opening</h2>
+              <h2 id="new-job-title" className="font-semibold text-neutral-900">Post New Job Opening</h2>
               <p className="text-xs text-neutral-500">Post a new JD for candidate submissions and AI screening</p>
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleCancelClick}
+            aria-label="Close"
             className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
@@ -211,7 +250,7 @@ Requirements:
             <div className="flex items-center justify-end gap-3">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleCancelClick}
                 className="px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
               >
                 Cancel
@@ -227,8 +266,7 @@ Requirements:
               </button>
             </div>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };

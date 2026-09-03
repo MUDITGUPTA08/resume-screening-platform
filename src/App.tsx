@@ -6,6 +6,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { AdminGateModal } from './components/AdminGateModal';
 import { NewJobModal } from './components/NewJobModal';
 import { ArchitectureWriteupModal } from './components/ArchitectureWriteupModal';
+import { useToast } from './components/ToastProvider';
 import {
   fetchOpenJobs,
   fetchAdminJobs,
@@ -18,7 +19,16 @@ import {
   clearStoredAdminPasscode,
 } from './services/apiClient';
 
+const STATUS_LABELS: Record<JobApplication['status'], string> = {
+  submitted: 'Submitted',
+  reviewed: 'Reviewed',
+  shortlisted: 'Shortlisted',
+  rejected: 'Rejected',
+};
+
 export default function App() {
+  const { showToast } = useToast();
+
   // Kept as two separate slices -- the public list is open-only and the
   // admin list includes closed jobs too, so a single shared `jobs` state
   // let whichever fetch resolved last (public vs admin) clobber the other
@@ -111,6 +121,23 @@ export default function App() {
     }
   }, [activeTab, isAdminAuthenticated, loadAdminData]);
 
+  // Scroll position is shared across both views, so arriving from a scrolled
+  // dashboard used to drop you into the middle of the other tab. Keyed off
+  // activeTab rather than the switcher's click handler so the two indirect
+  // paths -- unlocking the passcode gate and logging out -- reset too.
+  const isFirstTabRender = React.useRef(true);
+  useEffect(() => {
+    if (isFirstTabRender.current) {
+      // Don't fight the browser's own scroll restoration on initial load.
+      isFirstTabRender.current = false;
+      return;
+    }
+    // `behavior: 'smooth'` is a script-driven scroll, so the stylesheet's
+    // prefers-reduced-motion rule (animations/transitions only) can't reach it.
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  }, [activeTab]);
+
   const handleTabChange = (tab: 'candidate' | 'admin') => {
     if (tab === 'admin' && !isAdminAuthenticated) {
       setIsAdminGateOpen(true);
@@ -147,16 +174,43 @@ export default function App() {
     // nothing to store here beyond showing the confirmation screen.
   };
 
-  const handleUpdateApplicationStatus = async (appId: string, status: JobApplication['status']) => {
+  const handleUpdateApplicationStatus = async (
+    appId: string,
+    status: JobApplication['status'],
+    options?: { silent?: boolean }
+  ) => {
+    const previous = applications.find((app) => app.id === appId);
     try {
       await updateApplicationStatusAdmin(appId, status);
       setApplications((prev) => prev.map((app) => (app.id === appId ? { ...app, status } : app)));
+
+      if (options?.silent) return;
+      const name = previous?.candidate.fullName ?? 'Candidate';
+      showToast(`${name} marked as ${STATUS_LABELS[status]}.`, {
+        // Status is a single click with no confirmation step, so make the
+        // mistake cheap to walk back rather than requiring a second click.
+        action:
+          previous && previous.status !== status
+            ? {
+                label: 'Undo',
+                onAct: () =>
+                  handleUpdateApplicationStatus(appId, previous.status, { silent: true }),
+              }
+            : undefined,
+      });
     } catch (e) {
       console.error('Failed to update application status', e);
+      // The write never landed -- say so instead of leaving an optimistic
+      // change on screen that the server does not actually have.
+      showToast('Could not save that status change. Please try again.', { variant: 'error' });
     }
   };
 
-  const handleUpdateJobStatus = async (jobId: string, status: JobOpening['status']) => {
+  const handleUpdateJobStatus = async (
+    jobId: string,
+    status: JobOpening['status'],
+    options?: { silent?: boolean }
+  ) => {
     try {
       await updateJobStatusAdmin(jobId, status);
       // Invalidate any refetch that was already in flight before this call
@@ -169,8 +223,26 @@ export default function App() {
       // removed from it immediately, a reopened one is picked up on the
       // candidate tab's own next silent refetch rather than guessed here.
       setPublicJobs((prev) => prev.filter((job) => job.id !== jobId || status === 'open'));
+      const job = adminJobs.find((j) => j.id === jobId);
+      if (!options?.silent) {
+        showToast(
+          status === 'closed'
+            ? `"${job?.title ?? 'Job'}" is closed to new applications.`
+            : `"${job?.title ?? 'Job'}" is open for applications again.`,
+          {
+            action: {
+              label: 'Undo',
+              onAct: () =>
+                handleUpdateJobStatus(jobId, status === 'closed' ? 'open' : 'closed', {
+                  silent: true,
+                }),
+            },
+          }
+        );
+      }
     } catch (e) {
       console.error('Failed to update job status', e);
+      showToast('Could not update the job status. Please try again.', { variant: 'error' });
     }
   };
 

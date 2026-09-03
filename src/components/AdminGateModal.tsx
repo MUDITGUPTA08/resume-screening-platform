@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, X, KeyRound, AlertCircle, Loader2 } from 'lucide-react';
+import { Modal } from './Modal';
 
 interface Props {
   isOpen: boolean;
@@ -11,8 +12,6 @@ export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticat
   const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,17 +31,20 @@ export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticat
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-      <div
-        id="admin-auth-gate-modal"
-        className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      id="admin-auth-gate-modal"
+      labelledBy="admin-gate-title"
+      panelClassName="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden"
+    >
+      <button
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute right-5 top-5 p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
       >
-        <button
-          onClick={onClose}
-          className="absolute right-5 top-5 p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        <X className="w-4 h-4" />
+      </button>
 
         <form onSubmit={handleSubmit} className="px-8 pt-10 pb-8 text-center space-y-5">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-neutral-900 text-white flex items-center justify-center">
@@ -50,7 +52,7 @@ export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticat
           </div>
 
           <div className="space-y-1.5">
-            <h3 className="text-lg font-bold text-neutral-900 tracking-tight">Hiring Team Access</h3>
+            <h3 id="admin-gate-title" className="text-lg font-bold text-neutral-900 tracking-tight">Hiring Team Access</h3>
             <p className="text-xs text-neutral-500 leading-relaxed max-w-[26ch] mx-auto">
               Enter your access passcode to manage jobs and review candidates.
             </p>
@@ -104,8 +106,7 @@ export const AdminGateModal: React.FC<Props> = ({ isOpen, onClose, onAuthenticat
               </button>
             </p>
           </div>
-        </form>
-      </div>
-    </div>
+      </form>
+    </Modal>
   );
 };

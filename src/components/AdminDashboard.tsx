@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { JobOpening, JobApplication, MatchVerdict, SCORE_THRESHOLDS } from '../types';
 import { ApplicantCard } from './ApplicantCard';
+import { SelectableCard } from './SelectableCard';
+import { usePersistentState } from '../hooks/usePersistentState';
+import { scoreSearchRelevance } from '../utils/searchRelevance';
 import {
   Briefcase,
   MapPin,
@@ -14,7 +17,8 @@ import {
   TrendingUp,
   ArrowUpDown,
   Lock,
-  Unlock
+  Unlock,
+  X
 } from 'lucide-react';
 
 interface Props {
@@ -44,8 +48,13 @@ export const AdminDashboard: React.FC<Props> = ({
   onUpdateApplicationStatus,
   onUpdateJobStatus,
 }) => {
-  const [selectedJobId, setSelectedJobId] = useState<string>(jobs[0]?.id || '');
+  const [selectedJobId, setSelectedJobId] = usePersistentState<string>('admin.selectedJobId', '');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  // The filtered list is keyed on the query, so filtering on every keystroke
+  // replayed the staggered entrance animation per character and made the list
+  // strobe while typing. Debouncing the value the filter actually reads keeps
+  // the input responsive while the results settle once.
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [verdictFilter, setVerdictFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'score-desc' | 'score-asc' | 'newest' | 'oldest'>('score-desc');
   const [copiedQuestionId, setCopiedQuestionId] = useState<string | null>(null);
@@ -53,39 +62,60 @@ export const AdminDashboard: React.FC<Props> = ({
   const [expandedAnalysisAppId, setExpandedAnalysisAppId] = useState<string | null>(null);
   const [isViewingFullJD, setIsViewingFullJD] = useState<boolean>(false);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const selectedJob = jobs.find((j) => j.id === selectedJobId) || jobs[0];
+
+  // Restore or repair the remembered selection once jobs arrive -- a job
+  // deleted or renamed between visits must not leave the panel blank.
+  useEffect(() => {
+    if (jobs.length === 0) return;
+    if (!selectedJobId || !jobs.some((j) => j.id === selectedJobId)) {
+      setSelectedJobId(jobs[0].id);
+    }
+  }, [jobs, selectedJobId, setSelectedJobId]);
 
   // Resumes for selected JD (One-to-Many relationship)
   const jobApplications = applications.filter((app) => app.jobId === selectedJob?.id);
 
-  // Filtered + sorted applications
-  const filteredApplications = jobApplications
-    .filter((app) => {
-      const matchesSearch =
-        app.candidate.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.candidate.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.candidate.currentLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.analysis.fitSummary.toLowerCase().includes(searchQuery.toLowerCase());
+  const isSearching = debouncedSearch.trim().length > 0;
 
+  const compareBySortOrder = (a: JobApplication, b: JobApplication) => {
+    switch (sortOrder) {
+      case 'score-desc':
+        return b.analysis.matchScore - a.analysis.matchScore;
+      case 'score-asc':
+        return a.analysis.matchScore - b.analysis.matchScore;
+      case 'newest':
+        return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+      case 'oldest':
+        return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
+      default:
+        return 0;
+    }
+  };
+
+  // Filtered + sorted applications. Relevance is computed once per row rather
+  // than inside the comparator, which would recompute it on every comparison.
+  const filteredApplications = jobApplications
+    .map((app) => ({ app, relevance: scoreSearchRelevance(app, debouncedSearch) }))
+    .filter(({ app, relevance }) => {
       const matchesVerdict =
         verdictFilter === 'all' || app.analysis.verdict === VERDICT_FILTER_MAP[verdictFilter];
-
-      return matchesSearch && matchesVerdict;
+      return relevance > 0 && matchesVerdict;
     })
     .sort((a, b) => {
-      switch (sortOrder) {
-        case 'score-desc':
-          return b.analysis.matchScore - a.analysis.matchScore;
-        case 'score-asc':
-          return a.analysis.matchScore - b.analysis.matchScore;
-        case 'newest':
-          return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
-        case 'oldest':
-          return new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
-        default:
-          return 0;
+      // While searching, how well a row matches what was typed outranks the
+      // chosen sort order; the sort order then breaks ties within a tier.
+      if (isSearching && a.relevance !== b.relevance) {
+        return b.relevance - a.relevance;
       }
-    });
+      return compareBySortOrder(a.app, b.app);
+    })
+    .map(({ app }) => app);
 
   // Calculate statistics
   const openJobsCount = jobs.filter((j) => j.status === 'open').length;
@@ -246,10 +276,12 @@ export const AdminDashboard: React.FC<Props> = ({
               const isClosed = job.status === 'closed';
               const count = applications.filter((a) => a.jobId === job.id).length;
               return (
-                <div
+                <SelectableCard
                   key={job.id}
                   id={`admin-jd-card-${job.id}`}
-                  onClick={() => setSelectedJobId(job.id)}
+                  isSelected={isSelected}
+                  onSelect={() => setSelectedJobId(job.id)}
+                  ariaLabel={`${job.title}, ${count} ${count === 1 ? 'resume' : 'resumes'}${isClosed ? ', closed' : ''}`}
                   className={`stagger-item p-4 rounded-xl cursor-pointer border transition-all duration-300 text-left ${
                     isSelected
                       ? 'border-neutral-900 bg-neutral-900 text-white shadow-md'
@@ -319,7 +351,7 @@ export const AdminDashboard: React.FC<Props> = ({
                       )}
                     </span>
                   </button>
-                </div>
+                </SelectableCard>
               );
             })}
           </div>
@@ -399,9 +431,25 @@ export const AdminDashboard: React.FC<Props> = ({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      // Escape clears without reaching for the mouse, matching
+                      // the convention of every other search field.
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') setSearchQuery('');
+                      }}
+                      aria-label="Search candidates"
                       placeholder="Search candidate name or email..."
-                      className="w-full pl-8 pr-3 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-neutral-900"
+                      className="w-full pl-8 pr-8 py-1.5 text-xs bg-neutral-50 border border-neutral-200 rounded-lg focus:outline-hidden focus:ring-1 focus:ring-neutral-900"
                     />
+                    {searchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        aria-label="Clear search"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200 rounded transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
@@ -460,16 +508,31 @@ export const AdminDashboard: React.FC<Props> = ({
                 <Inbox className="w-6 h-6" />
               </div>
               <h3 className="font-semibold text-neutral-900 text-sm">
-                {jobApplications.length === 0 ? 'No applications yet' : 'No matching applicants'}
+                {jobApplications.length > 0
+                  ? 'No matching applicants'
+                  : selectedJob?.status === 'closed'
+                  ? 'Closed with no applications'
+                  : 'No applications yet'}
               </h3>
               <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-                {jobApplications.length === 0
-                  ? 'Applications submitted for this role will appear here once candidates start applying.'
-                  : 'No applicants match the current search or filter. Try adjusting them.'}
+                {jobApplications.length > 0
+                  ? 'No applicants match the current search or filter. Try adjusting them.'
+                  : selectedJob?.status === 'closed'
+                  ? 'This role is closed, so it is hidden from the candidate portal and cannot receive new applications. Reopen it to start collecting resumes.'
+                  : 'Applications submitted for this role will appear here once candidates start applying.'}
               </p>
+              {jobApplications.length === 0 && selectedJob?.status === 'closed' && (
+                <button
+                  onClick={() => onUpdateJobStatus(selectedJob.id, 'open')}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-medium hover:bg-emerald-100 transition-colors"
+                >
+                  <Unlock className="w-3.5 h-3.5" />
+                  Reopen Position
+                </button>
+              )}
             </div>
           ) : (
-            <div key={`${selectedJob?.id}-${verdictFilter}-${sortOrder}-${searchQuery}`} className="space-y-3">
+            <div key={`${selectedJob?.id}-${verdictFilter}-${sortOrder}-${debouncedSearch}`} className="space-y-3">
               {filteredApplications.map((app, index) => (
                 <div key={app.id} className="stagger-item" style={{ animationDelay: `${Math.min(index, 8) * 50}ms` }}>
                   <ApplicantCard
