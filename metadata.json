@@ -1,7 +1,0 @@
-{
-  "name": "Resume Screener",
-  "description": "A dual-sided hiring platform for posting job descriptions, collecting applicant .docx resumes, and providing AI-powered candidate screening and scoring for hiring teams.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
-
